@@ -1,27 +1,63 @@
-import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { APP_LOGO, APP_TITLE, getLoginUrl } from "@/const";
+import { Link } from "wouter";
 
-/**
- * All content in this page are only for example, delete if unneeded
- * When building pages, remember your instructions in Frontend Workflow, Frontend Best Practices, Design Guide and Common Pitfalls
- */
 export default function Home() {
-  // The userAuth hooks provides authentication state
-  // To implement login/logout functionality, simply call logout() or redirect to getLoginUrl()
-  let { user, loading, error, isAuthenticated, logout } = useAuth();
-
-  // If theme is switchable in App.tsx, we can implement theme toggling like this:
-  // const { theme, toggleTheme } = useTheme();
-
-  // Use APP_LOGO (as image src) and APP_TITLE if needed
-
   return (
-    <div className="min-h-screen flex flex-col">
-      <main>
-        Example Page
-        <Button variant="default">Example Button</Button>
-      </main>
+    <div className="min-h-screen flex flex-col items-center justify-center py-12 px-4">
+      <div className="max-w-3xl w-full text-center space-y-8">
+        {/* Header */}
+        <div className="space-y-4">
+          <h1 className="text-5xl md:text-6xl font-bold text-foreground">
+            Ilana Cares
+          </h1>
+          <h2 className="text-2xl md:text-3xl text-muted-foreground font-medium">
+            English Speaking Babysitter In Jerusalem
+          </h2>
+        </div>
+
+        {/* Logo */}
+        <div className="flex justify-center py-6">
+          <img
+            src="/logo.png"
+            alt="Ilana Cares - Childcare with love and attention"
+            className="w-64 h-64 md:w-80 md:h-80 rounded-full shadow-lg object-cover"
+          />
+        </div>
+
+        {/* Navigation Buttons */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto pt-8">
+          <Link href="/about">
+            <Button className="nav-button w-full gradient-pink text-primary-foreground">
+              About Ilana
+            </Button>
+          </Link>
+          
+          <Link href="/rates">
+            <Button className="nav-button w-full gradient-blue text-secondary-foreground">
+              Rates
+            </Button>
+          </Link>
+          
+          <Link href="/booking">
+            <Button className="nav-button w-full gradient-purple text-muted-foreground">
+              Availability & Booking
+            </Button>
+          </Link>
+          
+          <Link href="/payment">
+            <Button className="nav-button w-full gradient-yellow text-accent-foreground">
+              Online Payment Options
+            </Button>
+          </Link>
+          
+          <Link href="/contact">
+            <Button className="nav-button w-full md:col-span-2 gradient-pink text-primary-foreground">
+              Contact
+            </Button>
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }
+
