@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer';
 
-const GMAIL_USER = 'ilana.cunningham16@gmail.com';
-const GMAIL_APP_PASSWORD = 'zipe yywl pfwh acbw';
+const GMAIL_USER = process.env.GMAIL_USER || 'ilana.cunningham16@gmail.com';
+const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD || 'zipe yywl pfwh acbw';
 
 // Create reusable transporter
 const transporter = nodemailer.createTransport({
@@ -32,6 +32,7 @@ export interface ContactEmailData {
 
 export async function sendBookingEmail(data: BookingEmailData): Promise<boolean> {
   try {
+    console.log('[Email] Attempting to send booking email to:', GMAIL_USER);
     const mailOptions = {
       from: GMAIL_USER,
       to: GMAIL_USER,
@@ -64,11 +65,12 @@ export async function sendBookingEmail(data: BookingEmailData): Promise<boolean>
       `,
     };
 
-    await transporter.sendMail(mailOptions);
-    console.log('Booking email sent successfully');
+    const info = await transporter.sendMail(mailOptions);
+    console.log('[Email] Booking email sent successfully. Message ID:', info.messageId);
     return true;
   } catch (error) {
-    console.error('Error sending booking email:', error);
+    console.error('[Email] Error sending booking email:', error);
+    console.error('[Email] Gmail config - User:', GMAIL_USER, 'Password set:', !!GMAIL_APP_PASSWORD);
     return false;
   }
 }
