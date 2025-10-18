@@ -1,14 +1,7 @@
-import { google, Auth } from 'googleapis';
-
-type OAuth2Client = Auth.OAuth2Client;
+import { google } from 'googleapis';
 
 const CALENDAR_ID = 'ilana.cunningham16@gmail.com';
-
-// OAuth2 configuration - these will come from environment variables
-const CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
-const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
-const REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000/api/google/callback';
-const REFRESH_TOKEN = process.env.GOOGLE_REFRESH_TOKEN || '';
+const API_KEY = process.env.GOOGLE_API_KEY || '';
 
 export interface BusyTime {
   start: Date;
@@ -16,59 +9,16 @@ export interface BusyTime {
   summary?: string;
 }
 
-// Create OAuth2 client
-function getOAuth2Client(): OAuth2Client {
-  const oauth2Client = new google.auth.OAuth2(
-    CLIENT_ID,
-    CLIENT_SECRET,
-    REDIRECT_URI
-  );
-
-  // Set refresh token if available
-  if (REFRESH_TOKEN) {
-    oauth2Client.setCredentials({
-      refresh_token: REFRESH_TOKEN,
-    });
-  }
-
-  return oauth2Client;
-}
-
-// Generate OAuth URL for initial setup
-export function getAuthUrl(): string {
-  const oauth2Client = getOAuth2Client();
-  
-  const scopes = [
-    'https://www.googleapis.com/auth/calendar.readonly',
-  ];
-
-  const url = oauth2Client.generateAuthUrl({
-    access_type: 'offline',
-    scope: scopes,
-    prompt: 'consent', // Force to get refresh token
-  });
-
-  return url;
-}
-
-// Exchange authorization code for tokens
-export async function getTokensFromCode(code: string) {
-  const oauth2Client = getOAuth2Client();
-  const { tokens } = await oauth2Client.getToken(code);
-  return tokens;
-}
-
-// Fetch busy times from Google Calendar
+// Fetch busy times from Google Calendar using API Key
 export async function fetchBusyTimes(): Promise<BusyTime[]> {
   try {
-    // If no OAuth credentials, fall back to empty array
-    if (!CLIENT_ID || !CLIENT_SECRET || !REFRESH_TOKEN) {
-      console.warn('[Calendar] Google Calendar API not configured. Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REFRESH_TOKEN environment variables.');
+    // If no API key, return empty array
+    if (!API_KEY) {
+      console.warn('[Calendar] GOOGLE_API_KEY not configured. Set GOOGLE_API_KEY environment variable.');
       return [];
     }
 
-    const oauth2Client = getOAuth2Client();
-    const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+    const calendar = google.calendar({ version: 'v3', auth: API_KEY });
 
     // Get events from now to 3 months in the future (in Jerusalem timezone)
     const now = new Date();
