@@ -7,6 +7,7 @@ import { createBooking, createContact } from "./db";
 import { notifyOwner } from "./_core/notification";
 import { fetchBusyTimes } from "./calendar";
 import { appendBookingToSheet } from "./sheets";
+import { sendBookingEmail, sendContactEmail } from "./email";
 
 export const appRouter = router({
   system: systemRouter,
@@ -87,6 +88,18 @@ Please contact the client to confirm the booking.
           content: notificationContent,
         }).catch(err => console.error('[Booking] Notification failed:', err));
 
+        // Send email notification
+        await sendBookingEmail({
+          date: input.date,
+          startTime: input.startTime,
+          duration: input.duration,
+          fullName: input.fullName,
+          email: input.email,
+          phone: input.phone,
+          numChildren: input.numChildren,
+          additionalInfo: input.additionalInfo,
+        }).catch(err => console.error('[Booking] Email notification failed:', err));
+
         // Add to Google Sheets (non-blocking)
         appendBookingToSheet({
           parentName: input.fullName,
@@ -143,6 +156,14 @@ Please respond to this inquiry as soon as possible.
           title: `New Contact Message from ${input.name}`,
           content: notificationContent,
         }).catch(err => console.error('[Contact] Notification failed:', err));
+
+        // Send email notification
+        await sendContactEmail({
+          name: input.name,
+          email: input.email,
+          phone: input.phone,
+          message: input.message,
+        }).catch(err => console.error('[Contact] Email notification failed:', err));
 
         return { success: true };
       }),

@@ -1,27 +1,12 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
-// Email configuration - supports both Gmail and Outlook
-const EMAIL_USER = process.env.EMAIL_USER || 'ilanacares@outlook.com';
-const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD || 'lcljujvgvpgwmgut';
-const EMAIL_TO = process.env.EMAIL_TO || 'ilana.cunningham16@gmail.com'; // Where to send notifications
+// Email configuration using Resend
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const EMAIL_FROM = process.env.EMAIL_FROM || 'Ilana Cares <onboarding@resend.dev>';
+const EMAIL_TO = process.env.EMAIL_TO || 'ilana.cunningham16@gmail.com';
 
-// Detect email service from email address
-const isOutlook = EMAIL_USER.includes('outlook') || EMAIL_USER.includes('hotmail') || EMAIL_USER.includes('live');
-
-// Create reusable transporter
-const transporter = nodemailer.createTransport({
-  host: isOutlook ? 'smtp-mail.outlook.com' : 'smtp.gmail.com',
-  port: 587,
-  secure: false, // Use STARTTLS
-  auth: {
-    user: EMAIL_USER,
-    pass: EMAIL_PASSWORD.replace(/\s/g, ''), // Remove spaces from app password
-  },
-  tls: {
-    ciphers: 'SSLv3',
-    rejectUnauthorized: false
-  }
-});
+// Initialize Resend client
+const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 
 export interface BookingEmailData {
   date: string;
@@ -42,10 +27,16 @@ export interface ContactEmailData {
 }
 
 export async function sendBookingEmail(data: BookingEmailData): Promise<boolean> {
+  if (!resend) {
+    console.error('[Email] Resend API key not configured');
+    return false;
+  }
+
   try {
     console.log('[Email] Attempting to send booking email to:', EMAIL_TO);
-    const mailOptions = {
-      from: EMAIL_USER,
+    
+    const { data: emailData, error } = await resend.emails.send({
+      from: EMAIL_FROM,
       to: EMAIL_TO,
       subject: `New Booking Request from ${data.fullName}`,
       html: `
@@ -74,22 +65,32 @@ export async function sendBookingEmail(data: BookingEmailData): Promise<boolean>
         
         <p><em>Please contact the client to confirm the booking.</em></p>
       `,
-    };
+    });
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log('[Email] Booking email sent successfully. Message ID:', info.messageId);
+    if (error) {
+      console.error('[Email] Error sending booking email:', error);
+      return false;
+    }
+
+    console.log('[Email] Booking email sent successfully. Message ID:', emailData?.id);
     return true;
   } catch (error) {
     console.error('[Email] Error sending booking email:', error);
-    console.error('[Email] Email config - User:', EMAIL_USER, 'To:', EMAIL_TO, 'Password set:', !!EMAIL_PASSWORD);
     return false;
   }
 }
 
 export async function sendContactEmail(data: ContactEmailData): Promise<boolean> {
+  if (!resend) {
+    console.error('[Email] Resend API key not configured');
+    return false;
+  }
+
   try {
-    const mailOptions = {
-      from: EMAIL_USER,
+    console.log('[Email] Attempting to send contact email to:', EMAIL_TO);
+    
+    const { data: emailData, error } = await resend.emails.send({
+      from: EMAIL_FROM,
       to: EMAIL_TO,
       subject: `New Contact Message from ${data.name}`,
       html: `
@@ -108,13 +109,17 @@ export async function sendContactEmail(data: ContactEmailData): Promise<boolean>
         
         <p><em>Please respond to this inquiry as soon as possible.</em></p>
       `,
-    };
+    });
 
-    await transporter.sendMail(mailOptions);
-    console.log('Contact email sent successfully');
+    if (error) {
+      console.error('[Email] Error sending contact email:', error);
+      return false;
+    }
+
+    console.log('[Email] Contact email sent successfully. Message ID:', emailData?.id);
     return true;
   } catch (error) {
-    console.error('Error sending contact email:', error);
+    console.error('[Email] Error sending contact email:', error);
     return false;
   }
 }
