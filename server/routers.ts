@@ -4,7 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { createBooking, createContact } from "./db";
-import { sendBookingEmail, sendContactEmail } from "./email";
+import { notifyOwner } from "./_core/notification";
 import { fetchBusyTimes } from "./calendar";
 import { appendBookingToSheet } from "./sheets";
 
@@ -54,8 +54,38 @@ export const appRouter = router({
           additionalInfo: input.additionalInfo || null,
         });
 
-        // Send email notification
-        await sendBookingEmail(input);
+        // Format date for notification
+        const formattedDate = new Date(input.date).toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric',
+          timeZone: 'Asia/Jerusalem'
+        });
+
+        // Send notification to project owner
+        const notificationContent = `
+New Booking Request
+
+Booking Details:
+• Date: ${formattedDate}
+• Start Time: ${input.startTime}
+• Duration: ${input.duration} hours
+• Number of Children: ${input.numChildren}
+
+Contact Information:
+• Name: ${input.fullName}
+• Email: ${input.email}
+• Phone/WhatsApp: ${input.phone}
+
+${input.additionalInfo ? `Additional Information:\n${input.additionalInfo}\n\n` : ''}
+Please contact the client to confirm the booking.
+        `.trim();
+
+        await notifyOwner({
+          title: `New Booking Request from ${input.fullName}`,
+          content: notificationContent,
+        }).catch(err => console.error('[Booking] Notification failed:', err));
 
         // Add to Google Sheets (non-blocking)
         appendBookingToSheet({
@@ -94,8 +124,25 @@ export const appRouter = router({
           message: input.message,
         });
 
-        // Send email notification
-        await sendContactEmail(input);
+        // Send notification to project owner
+        const notificationContent = `
+New Contact Message
+
+Contact Information:
+• Name: ${input.name}
+• Email: ${input.email}
+• Phone/WhatsApp: ${input.phone}
+
+Message:
+${input.message}
+
+Please respond to this inquiry as soon as possible.
+        `.trim();
+
+        await notifyOwner({
+          title: `New Contact Message from ${input.name}`,
+          content: notificationContent,
+        }).catch(err => console.error('[Contact] Notification failed:', err));
 
         return { success: true };
       }),
