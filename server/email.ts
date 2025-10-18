@@ -1,15 +1,26 @@
 import nodemailer from 'nodemailer';
 
-const GMAIL_USER = process.env.GMAIL_USER || 'ilana.cunningham16@gmail.com';
-const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD || 'zipe yywl pfwh acbw';
+// Email configuration - supports both Gmail and Outlook
+const EMAIL_USER = process.env.EMAIL_USER || 'ilanacares@outlook.com';
+const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD || 'lcljujvgvpgwmgut';
+const EMAIL_TO = process.env.EMAIL_TO || 'ilana.cunningham16@gmail.com'; // Where to send notifications
+
+// Detect email service from email address
+const isOutlook = EMAIL_USER.includes('outlook') || EMAIL_USER.includes('hotmail') || EMAIL_USER.includes('live');
 
 // Create reusable transporter
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: isOutlook ? 'smtp-mail.outlook.com' : 'smtp.gmail.com',
+  port: 587,
+  secure: false, // Use STARTTLS
   auth: {
-    user: GMAIL_USER,
-    pass: GMAIL_APP_PASSWORD.replace(/\s/g, ''), // Remove spaces from app password
+    user: EMAIL_USER,
+    pass: EMAIL_PASSWORD.replace(/\s/g, ''), // Remove spaces from app password
   },
+  tls: {
+    ciphers: 'SSLv3',
+    rejectUnauthorized: false
+  }
 });
 
 export interface BookingEmailData {
@@ -32,10 +43,10 @@ export interface ContactEmailData {
 
 export async function sendBookingEmail(data: BookingEmailData): Promise<boolean> {
   try {
-    console.log('[Email] Attempting to send booking email to:', GMAIL_USER);
+    console.log('[Email] Attempting to send booking email to:', EMAIL_TO);
     const mailOptions = {
-      from: GMAIL_USER,
-      to: GMAIL_USER,
+      from: EMAIL_USER,
+      to: EMAIL_TO,
       subject: `New Booking Request from ${data.fullName}`,
       html: `
         <h2>New Booking Request</h2>
@@ -70,7 +81,7 @@ export async function sendBookingEmail(data: BookingEmailData): Promise<boolean>
     return true;
   } catch (error) {
     console.error('[Email] Error sending booking email:', error);
-    console.error('[Email] Gmail config - User:', GMAIL_USER, 'Password set:', !!GMAIL_APP_PASSWORD);
+    console.error('[Email] Email config - User:', EMAIL_USER, 'To:', EMAIL_TO, 'Password set:', !!EMAIL_PASSWORD);
     return false;
   }
 }
@@ -78,8 +89,8 @@ export async function sendBookingEmail(data: BookingEmailData): Promise<boolean>
 export async function sendContactEmail(data: ContactEmailData): Promise<boolean> {
   try {
     const mailOptions = {
-      from: GMAIL_USER,
-      to: GMAIL_USER,
+      from: EMAIL_USER,
+      to: EMAIL_TO,
       subject: `New Contact Message from ${data.name}`,
       html: `
         <h2>New Contact Message</h2>
