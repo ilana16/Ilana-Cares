@@ -6,6 +6,7 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { runMigrations } from "../migrate";
 
 
 // OAuth is optional for standalone deployment
@@ -39,6 +40,10 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 async function startServer() {
+  // Run database migrations on startup (production only)
+  if (process.env.NODE_ENV === "production") {
+    await runMigrations();
+  }
   const app = express();
   const server = createServer(app);
   // Configure body parser with larger size limit for file uploads
