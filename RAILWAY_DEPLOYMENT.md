@@ -5,10 +5,9 @@ This guide will walk you through deploying the Ilana Cares website to Railway.ap
 ## Prerequisites
 
 - Railway.app account (sign up at https://railway.app)
-- GitHub account (your code is already pushed to https://github.com/ilana16/Ilana-Cares)
-- MySQL database (Railway provides this)
+- GitHub account (your code is at https://github.com/ilana16/Ilana-Cares)
 
-## Step-by-Step Deployment
+## Quick Start Deployment
 
 ### 1. Create Railway Account
 
@@ -16,161 +15,213 @@ This guide will walk you through deploying the Ilana Cares website to Railway.ap
 2. Click "Login" and sign in with your GitHub account
 3. Authorize Railway to access your GitHub repositories
 
-### 2. Create New Project
+### 2. Deploy from GitHub
 
 1. Click "New Project" on the Railway dashboard
 2. Select "Deploy from GitHub repo"
 3. Choose your repository: `ilana16/Ilana-Cares`
-4. Railway will automatically detect it's a Node.js project
+4. Railway will automatically detect it's a Node.js project and start building
 
 ### 3. Add MySQL Database
 
 1. In your Railway project, click "+ New"
 2. Select "Database" → "Add MySQL"
-3. Railway will provision a MySQL database and automatically set the `DATABASE_URL` environment variable
+3. Railway will provision a MySQL database
+4. The `DATABASE_URL` environment variable will be automatically set
 
-### 4. Configure Environment Variables
+### 4. Configure Required Environment Variables
 
-Click on your service → "Variables" tab and add these environment variables:
+Click on your service → "Variables" tab and add:
 
-**Required Variables (Already Auto-Injected by Manus Platform):**
-- `DATABASE_URL` - (Automatically set by Railway MySQL)
-- `NODE_ENV` - Set to `production`
-- `PORT` - Set to `3000` (or leave empty, Railway auto-assigns)
-
-**Platform Variables (Copy from Manus):**
-These are already configured in your Manus project but need to be added to Railway:
-
+**Minimum Required Variables:**
 ```
-JWT_SECRET=<your-jwt-secret>
+NODE_ENV=production
+DATABASE_URL=(automatically set by Railway MySQL)
+```
+
+**Optional Variables (for full functionality):**
+
+If you want to use Manus OAuth (not required for basic functionality):
+```
+JWT_SECRET=your-random-secret-key-here
 OAUTH_SERVER_URL=https://api.manus.im
-VITE_APP_ID=<your-app-id>
+VITE_APP_ID=your-app-id
 VITE_OAUTH_PORTAL_URL=https://portal.manus.im
-OWNER_OPEN_ID=<your-owner-id>
-OWNER_NAME=<your-name>
-VITE_APP_TITLE=Ilana Cares
-VITE_APP_LOGO=https://your-logo-url.com/logo.png
-BUILT_IN_FORGE_API_URL=<your-forge-api-url>
-BUILT_IN_FORGE_API_KEY=<your-forge-api-key>
-VITE_ANALYTICS_ENDPOINT=<your-analytics-endpoint>
-VITE_ANALYTICS_WEBSITE_ID=<your-analytics-id>
+OWNER_OPEN_ID=your-owner-id
+OWNER_NAME=Ilana
 ```
 
-**Note:** The Gmail password and Firebase API key are currently hardcoded in the source files. For production, you should move these to environment variables.
+**Note:** The website will work without OAuth - it's designed for public access (booking and contact forms don't require login).
 
-### 5. Deploy
+### 5. Deploy!
 
-1. Railway will automatically start building and deploying
-2. Wait for the build to complete (usually 2-5 minutes)
-3. Once deployed, Railway will provide a public URL (e.g., `https://ilana-cares-production.up.railway.app`)
+1. Railway will automatically build and deploy
+2. Wait 2-5 minutes for the build to complete
+3. Railway will provide a public URL (e.g., `https://ilana-cares-production.up.railway.app`)
+4. Click the URL to view your live website!
 
-### 6. Run Database Migrations
+## Important Configuration Notes
 
-After the first deployment:
+### Email Notifications
 
-1. Go to your service in Railway
-2. Click on the "..." menu → "View Logs"
-3. The database tables should be automatically created on first run
-4. If not, you may need to run: `pnpm db:push` (Railway provides a way to run commands)
+Email credentials are currently in the code (`server/email.ts`):
+- **Gmail:** ilana.cunningham16@gmail.com
+- **App Password:** zipe yywl pfwh acbw (remove spaces when using)
 
-### 7. Test Your Deployment
+These will work as-is. For better security in production:
+1. Add environment variables: `GMAIL_USER` and `GMAIL_APP_PASSWORD`
+2. Update `server/email.ts` to use these variables
 
-1. Visit your Railway URL
-2. Test all pages:
-   - Home page
-   - About Ilana
-   - Rates
-   - Booking (check calendar integration)
-   - Payment Options
-   - Contact form
+### Google Calendar Integration
 
-### 8. Custom Domain (Optional)
+The calendar URL is in `server/calendar.ts` and will work automatically.
 
-To use your own domain:
+### Firebase Analytics
 
-1. In Railway, go to your service → "Settings"
-2. Scroll to "Domains"
-3. Click "Custom Domain"
-4. Follow the instructions to add your domain
-5. Update your DNS records as instructed
+Firebase configuration is in `client/src/lib/firebase.ts` and will work automatically.
 
-## Important Notes
+### Payment Information
 
-### Email Configuration
+Bit/Paybox number (0505298803) is in `client/src/pages/Payment.tsx`.
 
-The Gmail SMTP credentials are currently hardcoded in `server/email.ts`:
-- Email: `ilana.cunningham16@gmail.com`
-- App Password: `zipe yywl pfwh acbw` (remove spaces)
+## Testing Your Deployment
 
-**Security Recommendation:** Move these to environment variables:
-1. Add `GMAIL_USER` and `GMAIL_APP_PASSWORD` to Railway environment variables
-2. Update `server/email.ts` to use `process.env.GMAIL_USER` and `process.env.GMAIL_APP_PASSWORD`
+After deployment, test these features:
 
-### Firebase Configuration
-
-Firebase credentials are in `client/src/lib/firebase.ts`. These are safe to keep in the code as they're meant to be public (with proper Firebase security rules).
-
-### Calendar Integration
-
-The Google Calendar .ics URL is in `server/calendar.ts`. This is a private calendar URL, so keep it secure.
-
-### Database Backups
-
-Railway provides automatic backups for paid plans. For the free tier:
-1. Regularly export your database
-2. Consider upgrading to a paid plan for production use
+1. ✅ **Home Page** - Should load with navigation buttons
+2. ✅ **About Page** - Shows Ilana's bio and certifications
+3. ✅ **Rates Page** - Displays pricing information
+4. ✅ **Booking Page** - Calendar integration and form submission
+5. ✅ **Payment Page** - Shows Bit/Paybox information
+6. ✅ **Contact Page** - Contact form submission
 
 ## Troubleshooting
 
 ### Build Fails
 
-- Check the build logs in Railway
-- Ensure all dependencies are in `package.json`
-- Verify Node.js version compatibility
+**Check the logs:**
+1. Go to your service in Railway
+2. Click "Deployments" → Latest deployment → "View Logs"
+3. Look for error messages
 
-### Database Connection Issues
-
-- Verify `DATABASE_URL` is set correctly
-- Check database logs in Railway
-- Ensure database is running
+**Common issues:**
+- Missing `DATABASE_URL` - Make sure MySQL is added and connected
+- Build timeout - Railway free tier has build limits, upgrade if needed
 
 ### Application Crashes
 
-- Check application logs in Railway
-- Verify all environment variables are set
-- Check for missing dependencies
+**Check application logs:**
+1. Click on your service → "Logs"
+2. Look for runtime errors
+
+**Common fixes:**
+- Database connection: Verify `DATABASE_URL` is correct
+- Port binding: Railway sets `PORT` automatically, don't override it
+
+### Database Issues
+
+**Run migrations:**
+The app should auto-create tables on first run. If not:
+1. Go to your MySQL database in Railway
+2. Click "Query" tab
+3. Run the SQL from your schema manually, or
+4. Use Railway's CLI to run `pnpm db:push`
 
 ### Email Not Sending
 
 - Verify Gmail App Password is correct (no spaces)
-- Check if Gmail account has "Less secure app access" enabled (or use App Password)
-- Check application logs for SMTP errors
+- Check Gmail account settings allow SMTP access
+- Look for SMTP errors in application logs
+
+## Custom Domain (Optional)
+
+To use your own domain (e.g., `ilanacares.com`):
+
+1. In Railway, go to your service → "Settings"
+2. Scroll to "Domains" section
+3. Click "Custom Domain"
+4. Enter your domain name
+5. Update your DNS records:
+   - Add a CNAME record pointing to Railway's domain
+   - Or add A records to Railway's IP addresses
+6. Wait for DNS propagation (5-60 minutes)
 
 ## Cost Estimate
 
-**Railway Pricing:**
-- **Hobby Plan (Free)**: $5 credit/month, good for testing
-- **Developer Plan**: $5/month + usage (~$10-20/month total for this app)
-- **Team Plan**: $20/month + usage
+**Railway Pricing (as of 2025):**
+- **Hobby Plan**: $5 credit/month (free tier) - good for testing
+- **Pro Plan**: $20/month + usage
 
-For a production babysitting website with moderate traffic, expect around $10-15/month.
+**Expected costs for this app:**
+- Small traffic: $5-10/month (Hobby plan credit may cover it)
+- Moderate traffic: $10-20/month
+- Database: Included in usage
+
+**Tip:** Start with the Hobby plan. Railway shows real-time usage, so you can monitor costs.
+
+## Monitoring & Maintenance
+
+### View Metrics
+
+Railway provides built-in monitoring:
+1. Go to your service → "Metrics"
+2. View CPU, Memory, Network usage
+3. Set up alerts for high usage
+
+### View Logs
+
+Real-time logs are available:
+1. Click on your service → "Logs"
+2. Filter by time range or search for specific errors
+3. Download logs for analysis
+
+### Database Backups
+
+**Important:** Railway's free tier doesn't include automatic backups.
+
+**Manual backup:**
+1. Go to MySQL database → "Data" tab
+2. Export data regularly
+3. Or use Railway CLI to dump database
+
+**For production:** Upgrade to a paid plan with automatic backups.
+
+## Security Recommendations
+
+Before going live with real customers:
+
+1. **Move secrets to environment variables:**
+   - Gmail credentials
+   - Any API keys
+   - Database passwords
+
+2. **Enable HTTPS:** Railway provides this automatically
+
+3. **Set up monitoring:** Use Railway's alerts for downtime
+
+4. **Regular backups:** Export database weekly
+
+5. **Update dependencies:** Run `pnpm update` regularly
+
+## Next Steps
+
+✅ **Deployment Complete!**
+
+Now you can:
+1. Share your Railway URL with clients
+2. Add a custom domain
+3. Monitor bookings via email notifications
+4. Check database for booking records
 
 ## Support
 
-- Railway Documentation: https://docs.railway.app
-- Railway Discord: https://discord.gg/railway
-- GitHub Issues: https://github.com/ilana16/Ilana-Cares/issues
-
-## Next Steps After Deployment
-
-1. **Test thoroughly** - Try booking, contact forms, etc.
-2. **Set up monitoring** - Use Railway's built-in metrics
-3. **Configure backups** - Export database regularly
-4. **Add custom domain** - Use your own domain name
-5. **Update OAuth redirect URLs** - If using Manus OAuth, update allowed callback URLs
-6. **Monitor costs** - Keep an eye on Railway usage
+- **Railway Docs:** https://docs.railway.app
+- **Railway Discord:** https://discord.gg/railway
+- **GitHub Issues:** https://github.com/ilana16/Ilana-Cares/issues
 
 ---
 
-**Deployed successfully?** Share your Railway URL and start accepting bookings! 🎉
+**Need help?** Contact ilana.cunningham16@gmail.com
+
+**Deployed successfully?** Start accepting bookings! 🎉
 
