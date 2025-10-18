@@ -3,10 +3,20 @@ import express from "express";
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+
+// OAuth is optional for standalone deployment
+async function loadOAuthModule() {
+  try {
+    const oauthModule = await import("./oauth");
+    return oauthModule.registerOAuthRoutes;
+  } catch (e) {
+    console.log("[Server] OAuth module not available, running in standalone mode");
+    return null;
+  }
+}
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -33,8 +43,12 @@ async function startServer() {
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
-  // OAuth callback under /api/oauth/callback
-  registerOAuthRoutes(app);
+  
+  // OAuth callback under /api/oauth/callback (optional)
+  const registerOAuthRoutes = await loadOAuthModule();
+  if (registerOAuthRoutes) {
+    registerOAuthRoutes(app);
+  }
   // tRPC API
   app.use(
     "/api/trpc",
