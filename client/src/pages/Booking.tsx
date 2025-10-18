@@ -9,6 +9,9 @@ import { Home, ChevronLeft, ChevronRight, Calendar, Clock, User, CheckCircle } f
 import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { toZonedTime, fromZonedTime, format as formatTz } from 'date-fns-tz';
+
+const JERUSALEM_TZ = 'Asia/Jerusalem';
 
 export default function Booking() {
   const [step, setStep] = useState(1);
@@ -35,16 +38,17 @@ export default function Booking() {
     },
   });
 
-  // Calculate minimum bookable date (42 hours from now)
+  // Calculate minimum bookable date (42 hours from now in Jerusalem timezone)
   const minBookingDate = useMemo(() => {
-    const date = new Date();
-    date.setHours(date.getHours() + 42);
-    return date.toISOString().split('T')[0];
+    const nowInJerusalem = toZonedTime(new Date(), JERUSALEM_TZ);
+    nowInJerusalem.setHours(nowInJerusalem.getHours() + 42);
+    return formatTz(nowInJerusalem, 'yyyy-MM-dd', { timeZone: JERUSALEM_TZ });
   }, []);
 
   // Helper function to check if a date has any available slots
   const hasAvailableSlots = (dateString: string): boolean => {
-    const date = new Date(dateString);
+    // Parse date in Jerusalem timezone
+    const date = toZonedTime(new Date(dateString + 'T12:00:00'), JERUSALEM_TZ);
     const dayOfWeek = date.getDay();
     
     // Friday (5) and Saturday (6) are not available
@@ -66,14 +70,14 @@ export default function Booking() {
     // Check if any slot is available
     for (const slot of slots) {
       const [hours, minutes] = slot.split(':').map(Number);
-      const slotStart = new Date(dateString);
+      const slotStart = toZonedTime(new Date(dateString + 'T00:00:00'), JERUSALEM_TZ);
       slotStart.setHours(hours, minutes, 0, 0);
       
       const slotEnd = new Date(slotStart);
       slotEnd.setHours(slotStart.getHours() + duration, slotStart.getMinutes(), 0, 0);
       
       // Check if slot end time exceeds 11:30pm
-      const maxEndTime = new Date(dateString);
+      const maxEndTime = toZonedTime(new Date(dateString + 'T00:00:00'), JERUSALEM_TZ);
       maxEndTime.setHours(23, 30, 0, 0);
       if (slotEnd > maxEndTime) continue;
       
@@ -105,7 +109,8 @@ export default function Booking() {
   const availableTimeSlots = useMemo(() => {
     if (!selectedDate) return [];
     
-    const date = new Date(selectedDate);
+    // Parse date in Jerusalem timezone
+    const date = toZonedTime(new Date(selectedDate + 'T12:00:00'), JERUSALEM_TZ);
     const dayOfWeek = date.getDay();
     
     // Friday (5) and Saturday (6) are not available
@@ -127,7 +132,7 @@ export default function Booking() {
     // Filter out slots that don't fit duration or conflict with busy times (with 1-hour buffer)
     return slots.filter(slot => {
       const [hours, minutes] = slot.split(':').map(Number);
-      const slotStart = new Date(selectedDate);
+      const slotStart = toZonedTime(new Date(selectedDate + 'T00:00:00'), JERUSALEM_TZ);
       slotStart.setHours(hours, minutes, 0, 0);
       
       // Calculate slot end time based on selected duration
@@ -135,7 +140,7 @@ export default function Booking() {
       slotEnd.setHours(slotStart.getHours() + duration, slotStart.getMinutes(), 0, 0);
       
       // Check if slot end time exceeds 11:30pm
-      const maxEndTime = new Date(selectedDate);
+      const maxEndTime = toZonedTime(new Date(selectedDate + 'T00:00:00'), JERUSALEM_TZ);
       maxEndTime.setHours(23, 30, 0, 0);
       if (slotEnd > maxEndTime) return false;
       

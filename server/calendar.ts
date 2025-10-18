@@ -70,7 +70,7 @@ export async function fetchBusyTimes(): Promise<BusyTime[]> {
     const oauth2Client = getOAuth2Client();
     const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
-    // Get events from now to 3 months in the future
+    // Get events from now to 3 months in the future (in Jerusalem timezone)
     const now = new Date();
     const threeMonthsLater = new Date();
     threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
@@ -81,6 +81,7 @@ export async function fetchBusyTimes(): Promise<BusyTime[]> {
       timeMax: threeMonthsLater.toISOString(),
       singleEvents: true,
       orderBy: 'startTime',
+      timeZone: 'Asia/Jerusalem', // Ensure all times are in Jerusalem timezone
     });
 
     const events = response.data.items || [];
