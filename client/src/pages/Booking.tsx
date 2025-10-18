@@ -42,6 +42,65 @@ export default function Booking() {
     return date.toISOString().split('T')[0];
   }, []);
 
+  // Helper function to check if a date has any available slots
+  const hasAvailableSlots = (dateString: string): boolean => {
+    const date = new Date(dateString);
+    const dayOfWeek = date.getDay();
+    
+    // Friday (5) and Saturday (6) are not available
+    if (dayOfWeek === 5 || dayOfWeek === 6) return false;
+    
+    // Check all possible time slots for this date
+    const slots = [];
+    for (let hour = 9; hour <= 23; hour++) {
+      if (hour === 9) {
+        slots.push("09:30");
+      } else {
+        slots.push(`${hour.toString().padStart(2, '0')}:00`);
+        if (hour < 23) {
+          slots.push(`${hour.toString().padStart(2, '0')}:30`);
+        }
+      }
+    }
+    
+    // Check if any slot is available
+    for (const slot of slots) {
+      const [hours, minutes] = slot.split(':').map(Number);
+      const slotStart = new Date(dateString);
+      slotStart.setHours(hours, minutes, 0, 0);
+      
+      const slotEnd = new Date(slotStart);
+      slotEnd.setHours(slotStart.getHours() + duration, slotStart.getMinutes(), 0, 0);
+      
+      // Check if slot end time exceeds 11:30pm
+      const maxEndTime = new Date(dateString);
+      maxEndTime.setHours(23, 30, 0, 0);
+      if (slotEnd > maxEndTime) continue;
+      
+      // Check if slot conflicts with any busy time (with 1-hour buffer)
+      let hasConflict = false;
+      for (const busy of busyTimes) {
+        const busyStart = new Date(busy.start);
+        const busyEnd = new Date(busy.end);
+        
+        const bufferStart = new Date(busyStart);
+        bufferStart.setHours(bufferStart.getHours() - 1);
+        
+        const bufferEnd = new Date(busyEnd);
+        bufferEnd.setHours(bufferEnd.getHours() + 1);
+        
+        if (slotStart < bufferEnd && slotEnd > bufferStart) {
+          hasConflict = true;
+          break;
+        }
+      }
+      
+      if (!hasConflict) return true;
+    }
+    
+    return false;
+  };
+
   // Generate available time slots
   const availableTimeSlots = useMemo(() => {
     if (!selectedDate) return [];
@@ -65,28 +124,36 @@ export default function Booking() {
       }
     }
     
-    // Filter out slots that don't fit duration or conflict with busy times
+    // Filter out slots that don't fit duration or conflict with busy times (with 1-hour buffer)
     return slots.filter(slot => {
       const [hours, minutes] = slot.split(':').map(Number);
-      const slotTime = hours + minutes / 60;
-      const endTime = slotTime + duration;
-      
-      // Must end by 11:30pm
-      if (endTime > 23.5) return false;
-      
-      // Check if slot conflicts with any busy time
       const slotStart = new Date(selectedDate);
       slotStart.setHours(hours, minutes, 0, 0);
       
+      // Calculate slot end time based on selected duration
       const slotEnd = new Date(slotStart);
-      slotEnd.setHours(slotStart.getHours() + duration);
+      slotEnd.setHours(slotStart.getHours() + duration, slotStart.getMinutes(), 0, 0);
       
+      // Check if slot end time exceeds 11:30pm
+      const maxEndTime = new Date(selectedDate);
+      maxEndTime.setHours(23, 30, 0, 0);
+      if (slotEnd > maxEndTime) return false;
+      
+      // Check if slot conflicts with any busy time (with 1-hour buffer before and after)
       for (const busy of busyTimes) {
         const busyStart = new Date(busy.start);
         const busyEnd = new Date(busy.end);
         
-        // Check for overlap
-        if (slotStart < busyEnd && slotEnd > busyStart) {
+        // Add 1-hour buffer: busy time blocks from (start - 1hr) to (end + 1hr)
+        const bufferStart = new Date(busyStart);
+        bufferStart.setHours(bufferStart.getHours() - 1);
+        
+        const bufferEnd = new Date(busyEnd);
+        bufferEnd.setHours(bufferEnd.getHours() + 1);
+        
+        // Check if slot overlaps with buffered busy time
+        // Slot is unavailable if: slotStart < bufferEnd AND slotEnd > bufferStart
+        if (slotStart < bufferEnd && slotEnd > bufferStart) {
           return false;
         }
       }
@@ -253,12 +320,22 @@ export default function Booking() {
                   type="date"
                   min={minBookingDate}
                   value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
+                  onChange={(e) => {
+                    const newDate = e.target.value;
+                    setSelectedDate(newDate);
+                    // Reset selected time when date changes
+                    setSelectedTime("");
+                  }}
                   className="text-lg p-6"
                 />
                 {selectedDate && (new Date(selectedDate).getDay() === 5 || new Date(selectedDate).getDay() === 6) && (
                   <p className="text-destructive font-semibold">
                     Sorry, I'm not available on Fridays and Saturdays.
+                  </p>
+                )}
+                {selectedDate && !hasAvailableSlots(selectedDate) && new Date(selectedDate).getDay() !== 5 && new Date(selectedDate).getDay() !== 6 && (
+                  <p className="text-destructive font-semibold">
+                    No available time slots for this date with {duration}-hour duration. Please try a different date or adjust the duration.
                   </p>
                 )}
               </div>
