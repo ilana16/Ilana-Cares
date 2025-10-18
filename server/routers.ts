@@ -57,8 +57,8 @@ export const appRouter = router({
         // Send email notification
         await sendBookingEmail(input);
 
-        // Add to Google Sheets
-        await appendBookingToSheet({
+        // Add to Google Sheets (non-blocking)
+        appendBookingToSheet({
           parentName: input.fullName,
           parentEmail: input.email,
           parentPhone: input.phone,
@@ -69,7 +69,7 @@ export const appRouter = router({
           duration: input.duration,
           specialRequests: input.additionalInfo,
           timestamp: new Date(),
-        });
+        }).catch(err => console.error('[Booking] Sheets integration failed:', err));
 
         return { success: true };
       }),
