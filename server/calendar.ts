@@ -1,6 +1,14 @@
-import ical from 'node-ical';
+import { google, Auth } from 'googleapis';
 
-const CALENDAR_URL = 'https://calendar.google.com/calendar/ical/ilana.cunningham16%40gmail.com/private-61152a9b1ed98976ae5fe28815b6f4b6/basic.ics';
+type OAuth2Client = Auth.OAuth2Client;
+
+const CALENDAR_ID = 'ilana.cunningham16@gmail.com';
+
+// OAuth2 configuration - these will come from environment variables
+const CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
+const REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000/api/google/callback';
+const REFRESH_TOKEN = process.env.GOOGLE_REFRESH_TOKEN || '';
 
 export interface BusyTime {
   start: Date;
@@ -8,24 +16,93 @@ export interface BusyTime {
   summary?: string;
 }
 
+// Create OAuth2 client
+function getOAuth2Client(): OAuth2Client {
+  const oauth2Client = new google.auth.OAuth2(
+    CLIENT_ID,
+    CLIENT_SECRET,
+    REDIRECT_URI
+  );
+
+  // Set refresh token if available
+  if (REFRESH_TOKEN) {
+    oauth2Client.setCredentials({
+      refresh_token: REFRESH_TOKEN,
+    });
+  }
+
+  return oauth2Client;
+}
+
+// Generate OAuth URL for initial setup
+export function getAuthUrl(): string {
+  const oauth2Client = getOAuth2Client();
+  
+  const scopes = [
+    'https://www.googleapis.com/auth/calendar.readonly',
+  ];
+
+  const url = oauth2Client.generateAuthUrl({
+    access_type: 'offline',
+    scope: scopes,
+    prompt: 'consent', // Force to get refresh token
+  });
+
+  return url;
+}
+
+// Exchange authorization code for tokens
+export async function getTokensFromCode(code: string) {
+  const oauth2Client = getOAuth2Client();
+  const { tokens } = await oauth2Client.getToken(code);
+  return tokens;
+}
+
+// Fetch busy times from Google Calendar
 export async function fetchBusyTimes(): Promise<BusyTime[]> {
   try {
-    const events = await ical.async.fromURL(CALENDAR_URL);
-    const busyTimes: BusyTime[] = [];
-
-    for (const event of Object.values(events)) {
-      if (event.type === 'VEVENT' && event.start && event.end) {
-        busyTimes.push({
-          start: new Date(event.start),
-          end: new Date(event.end),
-          summary: event.summary,
-        });
-      }
+    // If no OAuth credentials, fall back to empty array
+    if (!CLIENT_ID || !CLIENT_SECRET || !REFRESH_TOKEN) {
+      console.warn('[Calendar] Google Calendar API not configured. Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REFRESH_TOKEN environment variables.');
+      return [];
     }
 
+    const oauth2Client = getOAuth2Client();
+    const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+
+    // Get events from now to 3 months in the future
+    const now = new Date();
+    const threeMonthsLater = new Date();
+    threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
+
+    const response = await calendar.events.list({
+      calendarId: CALENDAR_ID,
+      timeMin: now.toISOString(),
+      timeMax: threeMonthsLater.toISOString(),
+      singleEvents: true,
+      orderBy: 'startTime',
+    });
+
+    const events = response.data.items || [];
+    const busyTimes: BusyTime[] = [];
+
+    for (const event of events) {
+      // Skip all-day events and events without start/end times
+      if (!event.start?.dateTime || !event.end?.dateTime) {
+        continue;
+      }
+
+      busyTimes.push({
+        start: new Date(event.start.dateTime),
+        end: new Date(event.end.dateTime),
+        summary: event.summary || 'Busy',
+      });
+    }
+
+    console.log(`[Calendar] Fetched ${busyTimes.length} events from Google Calendar`);
     return busyTimes;
   } catch (error) {
-    console.error('Error fetching calendar events:', error);
+    console.error('[Calendar] Error fetching calendar events:', error);
     return [];
   }
 }

@@ -6,6 +6,7 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { registerGoogleAuthRoutes } from "../googleAuth";
 
 // OAuth is optional for standalone deployment
 async function loadOAuthModule() {
@@ -49,6 +50,9 @@ async function startServer() {
   if (registerOAuthRoutes) {
     registerOAuthRoutes(app);
   }
+  
+  // Google Calendar OAuth routes
+  registerGoogleAuthRoutes(app);
   // tRPC API
   app.use(
     "/api/trpc",

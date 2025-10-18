@@ -74,7 +74,17 @@ These will work as-is. For better security in production:
 
 ### Google Calendar Integration
 
-The calendar URL is in `server/calendar.ts` and will work automatically.
+The app now uses Google Calendar API with OAuth for real-time availability.
+
+**Setup required:**
+1. Follow the detailed instructions in `GOOGLE_CALENDAR_SETUP.md`
+2. Add these environment variables to Railway:
+   - `GOOGLE_CLIENT_ID`
+   - `GOOGLE_CLIENT_SECRET`
+   - `GOOGLE_REDIRECT_URI` (e.g., `https://your-app.up.railway.app/api/google/callback`)
+   - `GOOGLE_REFRESH_TOKEN` (obtained after OAuth authorization)
+
+**Without these variables:** The booking system will still work, but won't filter out busy times from your calendar.
 
 ### Firebase Analytics
 
