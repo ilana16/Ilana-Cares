@@ -6,6 +6,7 @@ import { z } from "zod";
 import { createBooking, createContact } from "./db";
 import { sendBookingEmail, sendContactEmail } from "./email";
 import { fetchBusyTimes } from "./calendar";
+import { appendBookingToSheet } from "./sheets";
 
 export const appRouter = router({
   system: systemRouter,
@@ -55,6 +56,20 @@ export const appRouter = router({
 
         // Send email notification
         await sendBookingEmail(input);
+
+        // Add to Google Sheets
+        await appendBookingToSheet({
+          parentName: input.fullName,
+          parentEmail: input.email,
+          parentPhone: input.phone,
+          childName: `${input.numChildren} child(ren)`,
+          childAge: 'N/A',
+          date: input.date,
+          startTime: input.startTime,
+          duration: input.duration,
+          specialRequests: input.additionalInfo,
+          timestamp: new Date(),
+        });
 
         return { success: true };
       }),
