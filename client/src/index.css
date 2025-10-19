@@ -194,4 +194,8 @@
   .gradient-yellow {
     background: linear-gradient(135deg, oklch(0.92 0.1 50) 0%, oklch(0.88 0.1 50) 100%);
   }
+  
+  .gradient-green {
+    background: linear-gradient(135deg, oklch(0.92 0.08 150) 0%, oklch(0.88 0.08 150) 100%);
+  }
 }

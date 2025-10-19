@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Link } from "wouter";
-import { Home, Copy, Check } from "lucide-react";
+import { Home, Copy, Check, CreditCard } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -52,7 +52,7 @@ export default function Payment() {
         </Card>
 
         {/* Payment Options */}
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
+        <div className="grid md:grid-cols-3 gap-6 mb-8">
           {/* Bit Payment */}
           <Card className="p-8 gradient-pink">
             <div className="text-center space-y-6">
@@ -114,6 +114,33 @@ export default function Payment() {
                   </>
                 )}
               </Button>
+            </div>
+          </Card>
+
+          {/* Stripe Payment */}
+          <Card className="p-8 gradient-green">
+            <div className="text-center space-y-6">
+              <div className="w-20 h-20 mx-auto bg-accent rounded-full flex items-center justify-center">
+                <CreditCard className="h-10 w-10 text-accent-foreground" />
+              </div>
+              <h2 className="text-3xl font-bold text-accent-foreground">Credit Card</h2>
+              <div className="bg-white/50 p-6 rounded-lg">
+                <p className="text-sm text-accent-foreground mb-2">Secure Online Payment</p>
+                <p className="text-lg text-accent-foreground">
+                  Pay with any credit or debit card
+                </p>
+              </div>
+              <a
+                href="https://buy.stripe.com/3cIfZh1gy8SpbKVdM6grS00"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block"
+              >
+                <Button className="w-full nav-button gradient-blue text-secondary-foreground">
+                  <CreditCard className="mr-2 h-5 w-5" />
+                  Pay with Card
+                </Button>
+              </a>
             </div>
           </Card>
         </div>
