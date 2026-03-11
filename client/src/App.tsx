@@ -42,6 +42,20 @@ function App() {
       >
         <TooltipProvider>
           <Toaster />
+          <div
+            style={{
+              backgroundColor: '#dc2626',
+              color: '#000000',
+              fontWeight: 900,
+              textAlign: 'center',
+              padding: '10px 16px',
+              fontSize: '1rem',
+              letterSpacing: '0.02em',
+              textTransform: 'uppercase',
+            }}
+          >
+            REDUCED RATE &mdash; &#8362;40/HOUR BASE RATE FOR ONE CHILD (UNTILL SCHOOLS REOPEN)!
+          </div>
           <Router />
         </TooltipProvider>
       </ThemeProvider>
