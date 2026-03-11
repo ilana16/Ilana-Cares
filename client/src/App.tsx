@@ -54,7 +54,7 @@ function App() {
               textTransform: 'uppercase',
             }}
           >
-            REDUCED RATE &mdash; &#8362;40/HOUR BASE RATE FOR ONE CHILD (UNTILL SCHOOLS REOPEN)!
+            REDUCED RATE &mdash; &#8362;40/HOUR BASE RATE FOR ONE CHILD (UNTIL SCHOOLS REOPEN)!
           </div>
           <Router />
         </TooltipProvider>
