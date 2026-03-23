@@ -46,15 +46,16 @@ function App() {
             style={{
               backgroundColor: '#dc2626',
               color: '#000000',
-              fontWeight: 900,
               textAlign: 'center',
               padding: '10px 16px',
-              fontSize: '1rem',
-              letterSpacing: '0.02em',
-              textTransform: 'uppercase',
             }}
           >
-            REDUCED RATE &mdash; &#8362;40/HOUR BASE RATE FOR ONE CHILD (UNTIL SCHOOLS REOPEN)!
+            <div style={{ fontWeight: 900, fontSize: '1rem', letterSpacing: '0.02em', textTransform: 'uppercase' }}>
+              REDUCED RATE - &#8362;40/HOUR BASE RATE FOR ONE CHILD (UNTIL SCHOOLS REOPEN)!
+            </div>
+            <div style={{ fontWeight: 700, fontSize: '0.9rem', letterSpacing: '0.02em', textTransform: 'uppercase', marginTop: '2px' }}>
+              ADDITIONAL DISCOUNTS AVAILABLE FOR MILUIM FAMILIES.
+            </div>
           </div>
           <Router />
         </TooltipProvider>
