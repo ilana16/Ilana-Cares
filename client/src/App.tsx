@@ -53,8 +53,8 @@ function App() {
             <div style={{ fontWeight: 900, fontSize: '1rem', letterSpacing: '0.02em', textTransform: 'uppercase' }}>
               REDUCED RATE - &#8362;40/HOUR BASE RATE FOR ONE CHILD (UNTIL SCHOOLS REOPEN)!
             </div>
-            <div style={{ fontWeight: 700, fontSize: '0.9rem', letterSpacing: '0.02em', textTransform: 'uppercase', marginTop: '2px' }}>
-              ADDITIONAL DISCOUNTS AVAILABLE FOR MILUIM FAMILIES.
+            <div style={{ fontWeight: 700, fontSize: '0.9rem', letterSpacing: '0.02em', marginTop: '2px' }}>
+              Discounts available for miluim families.
             </div>
           </div>
           <Router />
