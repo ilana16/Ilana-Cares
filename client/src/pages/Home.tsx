@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { CalendarDays } from "lucide-react";
+
 
 export default function Home() {
   return (
@@ -28,38 +28,37 @@ export default function Home() {
         {/* Navigation Buttons */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto pt-8">
           <Link href="/about">
-            <Button className="nav-button w-full gradient-pink text-primary-foreground">
+            <Button className="nav-button w-full gradient-pink text-black">
               About Ilana
             </Button>
           </Link>
           
           <Link href="/rates">
-            <Button className="nav-button w-full gradient-blue text-secondary-foreground">
+            <Button className="nav-button w-full gradient-blue text-black">
               Rates
             </Button>
           </Link>
           
           <Link href="/booking">
-            <Button className="nav-button w-full gradient-purple text-muted-foreground">
-              Availability & Booking
+            <Button className="nav-button w-full gradient-purple text-black">
+              Booking
             </Button>
           </Link>
           
           <Link href="/payment">
-            <Button className="nav-button w-full gradient-yellow text-accent-foreground">
+            <Button className="nav-button w-full gradient-yellow text-black">
               Online Payment Options
             </Button>
           </Link>
           
           <Link href="/availability-calendar">
-            <Button className="nav-button w-full gradient-green text-white flex items-center justify-center gap-2">
-              <CalendarDays className="h-5 w-5" />
+            <Button className="nav-button w-full gradient-green text-black">
               View Availability
             </Button>
           </Link>
 
           <Link href="/contact">
-            <Button className="nav-button w-full gradient-pink text-primary-foreground">
+            <Button className="nav-button w-full gradient-pink text-black">
               Contact
             </Button>
           </Link>

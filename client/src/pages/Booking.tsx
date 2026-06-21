@@ -248,10 +248,9 @@ export default function Booking() {
         </Link>
 
         <div className="flex flex-col sm:flex-row items-center justify-between mb-4 gap-3">
-          <h1 className="text-5xl font-bold text-center">Availability & Booking</h1>
+          <h1 className="text-5xl font-bold text-center">Booking</h1>
           <Link href="/availability-calendar">
-            <Button className="gradient-green text-white flex items-center gap-2 whitespace-nowrap">
-              <CalendarDays className="h-4 w-4" />
+            <Button className="gradient-green text-black whitespace-nowrap">
               View Availability
             </Button>
           </Link>
