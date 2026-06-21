@@ -2,10 +2,9 @@ import { useState, useMemo } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Home, ChevronLeft, ChevronRight, Calendar, Clock, Repeat } from "lucide-react";
+import { Home, ChevronLeft, ChevronRight, Calendar, Clock, Repeat, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toZonedTime, format as formatTz } from "date-fns-tz";
 import {
@@ -24,7 +23,6 @@ import {
   isSameMonth,
   format,
   parseISO,
-  isAfter,
   isBefore,
   differenceInCalendarWeeks,
   differenceInCalendarMonths,
@@ -40,10 +38,10 @@ interface BusyTime {
 }
 
 interface AvailableSlot {
-  date: string; // yyyy-MM-dd
-  startTime: string; // HH:mm
-  endTime: string; // HH:mm (earliest possible end given min duration 2h)
-  repeatingLabel?: string; // e.g. "Repeating availability for the next 3 month(s)."
+  date: string;
+  startTime: string;
+  endTime: string;
+  repeatingLabel?: string;
 }
 
 type ViewMode = "month" | "week" | "day" | "agenda";
@@ -70,10 +68,9 @@ function minBookableDate(): Date {
 
 function isWorkDay(date: Date): boolean {
   const day = date.getDay();
-  return day !== 5 && day !== 6; // not Friday or Saturday
+  return day !== 5 && day !== 6;
 }
 
-/** Generate all 30-minute slot start times for a work day */
 function generateSlots(): string[] {
   const slots: string[] = [];
   for (let h = WORK_START_HOUR; h <= WORK_END_HOUR; h++) {
@@ -103,7 +100,6 @@ function dateStringForDay(date: Date): string {
   return formatTz(date, "yyyy-MM-dd", { timeZone: JERUSALEM_TZ });
 }
 
-/** Check if a specific slot on a date conflicts with busy times (with buffer) */
 function isSlotFree(
   dateStr: string,
   startTime: string,
@@ -117,7 +113,6 @@ function isSlotFree(
   const slotEnd = new Date(slotStart);
   slotEnd.setHours(slotStart.getHours() + durationHours, slotStart.getMinutes(), 0, 0);
 
-  // Must end by WORK_END
   const maxEnd = toZonedTime(new Date(`${dateStr}T00:00:00`), JERUSALEM_TZ);
   maxEnd.setHours(WORK_END_HOUR, WORK_END_MINUTE, 0, 0);
   if (slotEnd > maxEnd) return false;
@@ -125,23 +120,15 @@ function isSlotFree(
   for (const busy of busyTimes) {
     const busyStart = new Date(busy.start);
     const busyEnd = new Date(busy.end);
-
     const bufStart = new Date(busyStart);
     bufStart.setHours(bufStart.getHours() - BUFFER_HOURS);
-
     const bufEnd = new Date(busyEnd);
     bufEnd.setHours(bufEnd.getHours() + BUFFER_HOURS);
-
     if (slotStart < bufEnd && slotEnd > bufStart) return false;
   }
   return true;
 }
 
-/**
- * For a given date, return the contiguous blocks of available time
- * (merging adjacent free 30-min slots into ranges).
- * Each block is { startTime, endTime (earliest end = start+2h) }.
- */
 function getAvailableBlocks(
   dateStr: string,
   busyTimes: BusyTime[]
@@ -151,7 +138,6 @@ function getAvailableBlocks(
   );
   if (freeSlots.length === 0) return [];
 
-  // Merge consecutive slots into blocks
   const blocks: { startTime: string; endTime: string }[] = [];
   let blockStart = freeSlots[0];
   let prevMins = slotToMinutes(freeSlots[0]);
@@ -159,7 +145,6 @@ function getAvailableBlocks(
   for (let i = 1; i <= freeSlots.length; i++) {
     const currMins = i < freeSlots.length ? slotToMinutes(freeSlots[i]) : -1;
     if (currMins !== prevMins + 30) {
-      // End of a block — end time = prev slot + MIN_DURATION hours
       const endMins = prevMins + MIN_DURATION * 60;
       blocks.push({
         startTime: blockStart,
@@ -176,15 +161,6 @@ function getAvailableBlocks(
   return blocks;
 }
 
-/**
- * Detect repeating availability for a given (dateStr, startTime) slot.
- * Returns a label like "Repeating availability for the next 3 month(s)." or undefined.
- *
- * Logic:
- *  - Look forward from dateStr for at least 1 month
- *  - Count how many occurrences of the same weekday+time are busy (irregular)
- *  - If ≤ 2 irregular busy occurrences → mark as repeating
- */
 function detectRepeating(
   dateStr: string,
   startTime: string,
@@ -192,14 +168,13 @@ function detectRepeating(
 ): string | undefined {
   const baseDate = parseISO(dateStr);
   const dayOfWeek = baseDate.getDay();
-  const lookAheadEnd = addMonths(new Date(), 3); // look 3 months ahead
+  const lookAheadEnd = addMonths(new Date(), 3);
 
   let irregularCount = 0;
   let lastFreeDate: Date | null = null;
   let occurrenceCount = 0;
 
-  // Walk every same-weekday occurrence from now to 3 months out
-  let cursor = addDays(baseDate, 7); // start from next week
+  let cursor = addDays(baseDate, 7);
   while (isBefore(cursor, lookAheadEnd)) {
     if (cursor.getDay() === dayOfWeek) {
       occurrenceCount++;
@@ -217,7 +192,6 @@ function detectRepeating(
   if (occurrenceCount === 0 || irregularCount > 2) return undefined;
   if (!lastFreeDate) return undefined;
 
-  // Calculate how far out the repeating availability extends
   const now = new Date();
   const weeksOut = differenceInCalendarWeeks(lastFreeDate, now);
   const monthsOut = differenceInCalendarMonths(lastFreeDate, now);
@@ -230,39 +204,26 @@ function detectRepeating(
   return undefined;
 }
 
-/**
- * Build all available slots for a range of dates.
- */
 function buildAvailableSlots(
   dates: Date[],
   busyTimes: BusyTime[],
   minDate: Date
 ): AvailableSlot[] {
   const slots: AvailableSlot[] = [];
-
   for (const date of dates) {
     if (!isWorkDay(date)) continue;
     if (isBefore(date, minDate) && !isSameDay(date, minDate)) continue;
-
     const dateStr = dateStringForDay(date);
     const blocks = getAvailableBlocks(dateStr, busyTimes);
-
     for (const block of blocks) {
       const repeatingLabel = detectRepeating(dateStr, block.startTime, busyTimes);
-      slots.push({
-        date: dateStr,
-        startTime: block.startTime,
-        endTime: block.endTime,
-        repeatingLabel,
-      });
+      slots.push({ date: dateStr, startTime: block.startTime, endTime: block.endTime, repeatingLabel });
     }
   }
-
   return slots;
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
+// ─── SlotBlock — full size (used in Day, Agenda, Week, and Day Sheet) ─────────
 function SlotBlock({
   slot,
   onClick,
@@ -273,24 +234,65 @@ function SlotBlock({
   return (
     <button
       onClick={() => onClick(slot)}
-      className="w-full text-left rounded-lg p-2 bg-green-100 border border-green-300 hover:bg-green-200 transition-colors cursor-pointer group"
+      className="w-full text-left rounded-xl p-3 bg-green-100 border border-green-300 hover:bg-green-200 active:bg-green-300 transition-colors cursor-pointer group"
     >
-      <div className="flex items-center gap-1 text-green-800 font-semibold text-xs">
-        <Clock className="h-3 w-3 flex-shrink-0" />
-        <span>
-          {slot.startTime} – {slot.endTime}+
-        </span>
+      <div className="flex items-center gap-2 text-green-800 font-bold text-sm">
+        <Clock className="h-4 w-4 flex-shrink-0" />
+        <span>{slot.startTime} – {slot.endTime}+</span>
       </div>
       {slot.repeatingLabel && (
-        <div className="flex items-start gap-1 mt-1 text-green-700 text-xs">
-          <Repeat className="h-3 w-3 flex-shrink-0 mt-0.5" />
-          <span className="italic">{slot.repeatingLabel}</span>
+        <div className="flex items-start gap-2 mt-1.5 text-green-700 text-sm">
+          <Repeat className="h-4 w-4 flex-shrink-0 mt-0.5" />
+          <span className="italic leading-snug">{slot.repeatingLabel}</span>
         </div>
       )}
-      <div className="text-green-600 text-xs mt-1 group-hover:underline">
+      <div className="text-green-600 text-sm font-medium mt-1.5 group-hover:underline">
         Tap to book →
       </div>
     </button>
+  );
+}
+
+// ─── Day Sheet — mobile bottom-sheet style panel for a selected day ───────────
+function DaySheet({
+  date,
+  slots,
+  onSlotClick,
+  onClose,
+}: {
+  date: Date;
+  slots: AvailableSlot[];
+  onSlotClick: (slot: AvailableSlot) => void;
+  onClose: () => void;
+}) {
+  const isFriSat = date.getDay() === 5 || date.getDay() === 6;
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40" onClick={onClose}>
+      <div
+        className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-5 max-h-[80vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-gray-800">
+            {format(date, "EEEE, MMMM d")}
+          </h3>
+          <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100">
+            <X className="h-5 w-5 text-gray-500" />
+          </button>
+        </div>
+        {isFriSat ? (
+          <p className="text-gray-500 italic text-center py-4">Not available on Fridays & Saturdays</p>
+        ) : slots.length === 0 ? (
+          <p className="text-gray-400 italic text-center py-4">No available slots on this day</p>
+        ) : (
+          <div className="space-y-3">
+            {slots.map((slot, i) => (
+              <SlotBlock key={i} slot={slot} onClick={(s) => { onSlotClick(s); onClose(); }} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -304,6 +306,8 @@ function MonthView({
   availableSlots: AvailableSlot[];
   onSlotClick: (slot: AvailableSlot) => void;
 }) {
+  const [sheetDay, setSheetDay] = useState<Date | null>(null);
+
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const calStart = startOfWeek(monthStart, { weekStartsOn: 0 });
@@ -320,57 +324,118 @@ function MonthView({
   }, [availableSlots]);
 
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const sheetSlots = sheetDay ? (slotsByDate[format(sheetDay, "yyyy-MM-dd")] || []) : [];
 
   return (
-    <div>
-      <div className="grid grid-cols-7 mb-1">
-        {dayNames.map((d) => (
-          <div key={d} className="text-center text-xs font-semibold text-gray-500 py-1">
-            {d}
-          </div>
-        ))}
-      </div>
-      <div className="grid grid-cols-7 gap-px bg-gray-200 border border-gray-200 rounded-lg overflow-hidden">
-        {days.map((day) => {
-          const dateStr = format(day, "yyyy-MM-dd");
-          const daySlots = slotsByDate[dateStr] || [];
-          const isCurrentMonth = isSameMonth(day, currentDate);
-          const isToday = isSameDay(day, new Date());
-          const isFriSat = day.getDay() === 5 || day.getDay() === 6;
-
-          return (
-            <div
-              key={dateStr}
-              className={`bg-white min-h-[90px] p-1 ${!isCurrentMonth ? "opacity-40" : ""} ${isFriSat ? "bg-gray-50" : ""}`}
-            >
-              <div
-                className={`text-xs font-medium mb-1 w-6 h-6 flex items-center justify-center rounded-full ${
-                  isToday ? "bg-primary text-white" : "text-gray-700"
-                }`}
-              >
-                {format(day, "d")}
-              </div>
-              {isFriSat && isCurrentMonth && (
-                <div className="text-xs text-gray-400 italic">Unavail.</div>
-              )}
-              <div className="space-y-1 overflow-hidden">
-                {daySlots.slice(0, 2).map((slot, i) => (
-                  <SlotBlock key={i} slot={slot} onClick={onSlotClick} />
-                ))}
-                {daySlots.length > 2 && (
-                  <button
-                    className="text-xs text-primary underline"
-                    onClick={() => onSlotClick(daySlots[2])}
-                  >
-                    +{daySlots.length - 2} more
-                  </button>
-                )}
-              </div>
+    <>
+      <div>
+        {/* Day name headers */}
+        <div className="grid grid-cols-7 mb-1">
+          {dayNames.map((d) => (
+            <div key={d} className="text-center text-xs font-semibold text-gray-500 py-1">
+              {/* Show abbreviated on mobile */}
+              <span className="hidden sm:inline">{d}</span>
+              <span className="sm:hidden">{d.charAt(0)}</span>
             </div>
-          );
-        })}
+          ))}
+        </div>
+
+        {/* Calendar grid */}
+        <div className="grid grid-cols-7 gap-px bg-gray-200 border border-gray-200 rounded-lg overflow-hidden">
+          {days.map((day) => {
+            const dateStr = format(day, "yyyy-MM-dd");
+            const daySlots = slotsByDate[dateStr] || [];
+            const isCurrentMonth = isSameMonth(day, currentDate);
+            const isToday = isSameDay(day, new Date());
+            const isFriSat = day.getDay() === 5 || day.getDay() === 6;
+            const hasSlots = daySlots.length > 0;
+
+            return (
+              <button
+                key={dateStr}
+                onClick={() => isCurrentMonth && setSheetDay(day)}
+                className={`bg-white text-left transition-colors
+                  ${!isCurrentMonth ? "opacity-30" : ""}
+                  ${isFriSat ? "bg-gray-50" : ""}
+                  ${hasSlots && isCurrentMonth ? "hover:bg-green-50 active:bg-green-100 cursor-pointer" : "cursor-default"}
+                `}
+              >
+                {/* Mobile: compact dot view */}
+                <div className="sm:hidden p-1 min-h-[52px] flex flex-col items-center">
+                  <div className={`text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full mb-0.5
+                    ${isToday ? "bg-primary text-white" : "text-gray-700"}`}>
+                    {format(day, "d")}
+                  </div>
+                  {hasSlots && isCurrentMonth && (
+                    <div className="flex flex-col items-center gap-0.5">
+                      <div className="w-2 h-2 rounded-full bg-green-500" />
+                      <span className="text-green-700 font-bold" style={{ fontSize: "9px" }}>
+                        {daySlots.length}
+                      </span>
+                    </div>
+                  )}
+                  {isFriSat && isCurrentMonth && (
+                    <div className="w-2 h-2 rounded-full bg-gray-300" />
+                  )}
+                </div>
+
+                {/* Desktop: full slot text */}
+                <div className="hidden sm:block p-1 min-h-[90px]">
+                  <div className={`text-xs font-medium mb-1 w-6 h-6 flex items-center justify-center rounded-full
+                    ${isToday ? "bg-primary text-white" : "text-gray-700"}`}>
+                    {format(day, "d")}
+                  </div>
+                  {isFriSat && isCurrentMonth && (
+                    <div className="text-xs text-gray-400 italic">Unavail.</div>
+                  )}
+                  <div className="space-y-1 overflow-hidden">
+                    {daySlots.slice(0, 2).map((slot, i) => (
+                      <div
+                        key={i}
+                        onClick={(e) => { e.stopPropagation(); onSlotClick(slot); }}
+                        className="rounded-md px-1.5 py-1 bg-green-100 border border-green-300 hover:bg-green-200 cursor-pointer"
+                      >
+                        <div className="flex items-center gap-1 text-green-800 font-semibold text-xs">
+                          <Clock className="h-2.5 w-2.5 flex-shrink-0" />
+                          <span>{slot.startTime}–{slot.endTime}+</span>
+                        </div>
+                        {slot.repeatingLabel && (
+                          <div className="flex items-center gap-0.5 text-green-700 mt-0.5" style={{ fontSize: "10px" }}>
+                            <Repeat className="h-2.5 w-2.5 flex-shrink-0" />
+                            <span className="italic truncate">{slot.repeatingLabel}</span>
+                          </div>
+                        )}
+                        <div className="text-green-600 mt-0.5" style={{ fontSize: "10px" }}>Tap to book →</div>
+                      </div>
+                    ))}
+                    {daySlots.length > 2 && (
+                      <div className="text-xs text-primary font-medium pl-0.5">
+                        +{daySlots.length - 2} more
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Mobile hint */}
+        <p className="sm:hidden text-center text-xs text-gray-400 mt-2 italic">
+          Tap a day with a green dot to see available slots
+        </p>
       </div>
-    </div>
+
+      {/* Day sheet (mobile bottom panel) */}
+      {sheetDay && (
+        <DaySheet
+          date={sheetDay}
+          slots={sheetSlots}
+          onSlotClick={onSlotClick}
+          onClose={() => setSheetDay(null)}
+        />
+      )}
+    </>
   );
 }
 
@@ -397,42 +462,85 @@ function WeekView({
   }, [availableSlots]);
 
   return (
-    <div className="grid grid-cols-7 gap-2">
-      {days.map((day) => {
-        const dateStr = format(day, "yyyy-MM-dd");
-        const daySlots = slotsByDate[dateStr] || [];
-        const isToday = isSameDay(day, new Date());
-        const isFriSat = day.getDay() === 5 || day.getDay() === 6;
+    <>
+      {/* Mobile: vertical list of days */}
+      <div className="sm:hidden space-y-3">
+        {days.map((day) => {
+          const dateStr = format(day, "yyyy-MM-dd");
+          const daySlots = slotsByDate[dateStr] || [];
+          const isToday = isSameDay(day, new Date());
+          const isFriSat = day.getDay() === 5 || day.getDay() === 6;
 
-        return (
-          <div key={dateStr} className="flex flex-col">
-            <div
-              className={`text-center text-xs font-semibold py-2 rounded-t-lg ${
-                isToday ? "bg-primary text-white" : "bg-gray-100 text-gray-600"
-              }`}
-            >
-              <div>{format(day, "EEE")}</div>
-              <div className="text-base font-bold">{format(day, "d")}</div>
+          return (
+            <div key={dateStr} className="rounded-xl border border-gray-200 overflow-hidden">
+              <div className={`px-4 py-2 font-semibold text-sm flex items-center gap-2
+                ${isToday ? "bg-primary text-white" : "bg-gray-100 text-gray-700"}`}>
+                <span>{format(day, "EEEE, MMM d")}</span>
+                {isToday && <span className="text-xs font-normal opacity-80">(Today)</span>}
+              </div>
+              <div className="p-3 bg-white space-y-2">
+                {isFriSat ? (
+                  <p className="text-sm text-gray-400 italic">Not available</p>
+                ) : daySlots.length === 0 ? (
+                  <p className="text-sm text-gray-300 italic">No available slots</p>
+                ) : (
+                  daySlots.map((slot, i) => (
+                    <SlotBlock key={i} slot={slot} onClick={onSlotClick} />
+                  ))
+                )}
+              </div>
             </div>
-            <div className="flex-1 border border-gray-200 rounded-b-lg p-1 space-y-1 min-h-[120px] bg-white">
-              {isFriSat ? (
-                <div className="text-xs text-gray-400 italic text-center pt-2">
-                  Not available
-                </div>
-              ) : daySlots.length === 0 ? (
-                <div className="text-xs text-gray-300 italic text-center pt-2">
-                  No slots
-                </div>
-              ) : (
-                daySlots.map((slot, i) => (
-                  <SlotBlock key={i} slot={slot} onClick={onSlotClick} />
-                ))
-              )}
+          );
+        })}
+      </div>
+
+      {/* Desktop: 7-column grid */}
+      <div className="hidden sm:grid grid-cols-7 gap-2">
+        {days.map((day) => {
+          const dateStr = format(day, "yyyy-MM-dd");
+          const daySlots = slotsByDate[dateStr] || [];
+          const isToday = isSameDay(day, new Date());
+          const isFriSat = day.getDay() === 5 || day.getDay() === 6;
+
+          return (
+            <div key={dateStr} className="flex flex-col">
+              <div className={`text-center text-xs font-semibold py-2 rounded-t-lg
+                ${isToday ? "bg-primary text-white" : "bg-gray-100 text-gray-600"}`}>
+                <div>{format(day, "EEE")}</div>
+                <div className="text-base font-bold">{format(day, "d")}</div>
+              </div>
+              <div className="flex-1 border border-gray-200 rounded-b-lg p-1 space-y-1 min-h-[120px] bg-white">
+                {isFriSat ? (
+                  <div className="text-xs text-gray-400 italic text-center pt-2">Not available</div>
+                ) : daySlots.length === 0 ? (
+                  <div className="text-xs text-gray-300 italic text-center pt-2">No slots</div>
+                ) : (
+                  daySlots.map((slot, i) => (
+                    <div
+                      key={i}
+                      onClick={() => onSlotClick(slot)}
+                      className="rounded-md px-1.5 py-1 bg-green-100 border border-green-300 hover:bg-green-200 cursor-pointer"
+                    >
+                      <div className="flex items-center gap-1 text-green-800 font-semibold text-xs">
+                        <Clock className="h-2.5 w-2.5 flex-shrink-0" />
+                        <span>{slot.startTime}–{slot.endTime}+</span>
+                      </div>
+                      {slot.repeatingLabel && (
+                        <div className="flex items-center gap-0.5 text-green-700 mt-0.5" style={{ fontSize: "10px" }}>
+                          <Repeat className="h-2.5 w-2.5 flex-shrink-0" />
+                          <span className="italic truncate">{slot.repeatingLabel}</span>
+                        </div>
+                      )}
+                      <div className="text-green-600 mt-0.5" style={{ fontSize: "10px" }}>Tap to book →</div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
-          </div>
-        );
-      })}
-    </div>
+          );
+        })}
+      </div>
+    </>
   );
 }
 
@@ -469,9 +577,7 @@ function DayView({
       ) : (
         <div className="space-y-3">
           {daySlots.map((slot, i) => (
-            <Card key={i} className="p-4 hover:shadow-md transition-shadow">
-              <SlotBlock slot={slot} onClick={onSlotClick} />
-            </Card>
+            <SlotBlock key={i} slot={slot} onClick={onSlotClick} />
           ))}
         </div>
       )}
@@ -487,7 +593,6 @@ function AgendaView({
   availableSlots: AvailableSlot[];
   onSlotClick: (slot: AvailableSlot) => void;
 }) {
-  // Group by date
   const grouped = useMemo(() => {
     const map: Record<string, AvailableSlot[]> = {};
     for (const slot of availableSlots) {
@@ -497,7 +602,6 @@ function AgendaView({
     return Object.entries(map).sort(([a], [b]) => a.localeCompare(b));
   }, [availableSlots]);
 
-  // Collect repeating slots for legend
   const repeatingSlots = availableSlots.filter((s) => s.repeatingLabel);
 
   if (grouped.length === 0) {
@@ -514,11 +618,11 @@ function AgendaView({
       {grouped.map(([dateStr, slots]) => (
         <div key={dateStr}>
           <div className="flex items-center gap-2 mb-2">
-            <div className="text-sm font-bold text-gray-700 bg-gray-100 px-3 py-1 rounded-full">
+            <div className="text-sm font-bold text-gray-700 bg-gray-100 px-3 py-1.5 rounded-full">
               {format(parseISO(dateStr), "EEEE, MMMM d, yyyy")}
             </div>
           </div>
-          <div className="space-y-2 pl-2 border-l-2 border-green-300">
+          <div className="space-y-2 pl-3 border-l-2 border-green-300">
             {slots.map((slot, i) => (
               <SlotBlock key={i} slot={slot} onClick={onSlotClick} />
             ))}
@@ -526,7 +630,6 @@ function AgendaView({
         </div>
       ))}
 
-      {/* Repeating Availability Legend */}
       {repeatingSlots.length > 0 && (
         <Card className="p-4 bg-green-50 border-green-200 mt-8">
           <div className="flex items-center gap-2 mb-3">
@@ -567,16 +670,13 @@ function BookModal({
   if (!slot) return null;
 
   const handleBook = () => {
-    // Navigate to booking page with pre-filled query params
-    navigate(
-      `/booking?date=${slot.date}&startTime=${slot.startTime}&duration=${duration}`
-    );
+    navigate(`/booking?date=${slot.date}&startTime=${slot.startTime}&duration=${duration}`);
     onClose();
   };
 
   return (
     <Dialog open={!!slot} onOpenChange={onClose}>
-      <DialogContent className="max-w-sm">
+      <DialogContent className="max-w-sm mx-4">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5 text-primary" />
@@ -630,26 +730,20 @@ export default function AvailabilityCalendar() {
   const [selectedSlot, setSelectedSlot] = useState<AvailableSlot | null>(null);
 
   const { data: rawBusyTimes = [], isLoading } = trpc.booking.getBusyTimes.useQuery();
-
   const minDate = useMemo(() => minBookableDate(), []);
 
-  // Determine the date range to compute slots for based on view
   const dateRange = useMemo(() => {
     if (view === "month") {
-      const s = startOfMonth(currentDate);
-      const e = endOfMonth(currentDate);
-      return eachDayOfInterval({ start: s, end: e });
+      return eachDayOfInterval({ start: startOfMonth(currentDate), end: endOfMonth(currentDate) });
     } else if (view === "week") {
-      const s = startOfWeek(currentDate, { weekStartsOn: 0 });
-      const e = endOfWeek(currentDate, { weekStartsOn: 0 });
-      return eachDayOfInterval({ start: s, end: e });
+      return eachDayOfInterval({
+        start: startOfWeek(currentDate, { weekStartsOn: 0 }),
+        end: endOfWeek(currentDate, { weekStartsOn: 0 }),
+      });
     } else if (view === "day") {
       return [currentDate];
     } else {
-      // Agenda: next 3 months
-      const s = new Date();
-      const e = addMonths(s, 3);
-      return eachDayOfInterval({ start: s, end: e });
+      return eachDayOfInterval({ start: new Date(), end: addMonths(new Date(), 3) });
     }
   }, [view, currentDate]);
 
@@ -658,20 +752,12 @@ export default function AvailabilityCalendar() {
     return buildAvailableSlots(dateRange, rawBusyTimes, minDate);
   }, [dateRange, rawBusyTimes, minDate, isLoading]);
 
-  // Repeating slots for the legend (shown in all views except agenda which has its own)
-  const repeatingSlots = useMemo(
-    () => availableSlots.filter((s) => s.repeatingLabel),
-    [availableSlots]
-  );
+  const repeatingSlots = useMemo(() => availableSlots.filter((s) => s.repeatingLabel), [availableSlots]);
 
-  // Navigation
-  const navigate = (dir: 1 | -1) => {
-    if (view === "month")
-      setCurrentDate((d) => (dir === 1 ? addMonths(d, 1) : subMonths(d, 1)));
-    else if (view === "week")
-      setCurrentDate((d) => (dir === 1 ? addWeeks(d, 1) : subWeeks(d, 1)));
-    else if (view === "day")
-      setCurrentDate((d) => (dir === 1 ? addDays(d, 1) : subDays(d, 1)));
+  const navigateCal = (dir: 1 | -1) => {
+    if (view === "month") setCurrentDate((d) => (dir === 1 ? addMonths(d, 1) : subMonths(d, 1)));
+    else if (view === "week") setCurrentDate((d) => (dir === 1 ? addWeeks(d, 1) : subWeeks(d, 1)));
+    else if (view === "day") setCurrentDate((d) => (dir === 1 ? addDays(d, 1) : subDays(d, 1)));
   };
 
   const headerLabel = useMemo(() => {
@@ -686,72 +772,59 @@ export default function AvailabilityCalendar() {
   }, [view, currentDate]);
 
   return (
-    <div className="min-h-screen py-8 px-4">
+    <div className="min-h-screen py-6 px-3 sm:px-4">
       <div className="container max-w-5xl">
         {/* Back button */}
         <Link href="/">
-          <Button variant="outline" className="mb-6">
+          <Button variant="outline" className="mb-5">
             <Home className="mr-2 h-4 w-4" />
             Back to Home
           </Button>
         </Link>
 
-        <h1 className="text-4xl font-bold text-center mb-2">View Availability</h1>
-        <p className="text-center text-gray-500 mb-6">
+        <h1 className="text-3xl sm:text-4xl font-bold text-center mb-2">View Availability</h1>
+        <p className="text-center text-gray-500 text-sm sm:text-base mb-5">
           Browse open time slots and tap any block to book. All times are Jerusalem time (IST).
         </p>
 
         {/* General hours info */}
-        <Card className="p-4 mb-6 gradient-yellow">
-          <div className="flex flex-wrap gap-4 text-sm text-accent-foreground">
-            <span>
-              <strong>Available:</strong> Sun–Thu, 9:30 am – 11:30 pm
-            </span>
-            <span>
-              <strong>Not available:</strong> Fri & Sat
-            </span>
-            <span>
-              <strong>Advance notice:</strong> At least 42 hours required
-            </span>
+        <Card className="p-3 sm:p-4 mb-5 gradient-yellow">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-1 sm:gap-4 text-sm text-accent-foreground">
+            <span><strong>Available:</strong> Sun–Thu, 9:30 am – 11:30 pm</span>
+            <span><strong>Not available:</strong> Fri & Sat</span>
+            <span><strong>Advance notice:</strong> At least 42 hours</span>
           </div>
         </Card>
 
         {/* View switcher + navigation */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-          {/* View tabs */}
-          <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+        <div className="flex flex-col gap-3 mb-4">
+          {/* View tabs — full width on mobile */}
+          <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-full">
             {(["month", "week", "day", "agenda"] as ViewMode[]).map((v) => (
               <button
                 key={v}
                 onClick={() => setView(v)}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium capitalize transition-colors ${
-                  view === v
-                    ? "bg-white shadow text-primary"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
+                className={`flex-1 py-2 rounded-md text-sm font-medium capitalize transition-colors
+                  ${view === v ? "bg-white shadow text-primary" : "text-gray-600 hover:text-gray-900"}`}
               >
                 {v}
               </button>
             ))}
           </div>
 
-          {/* Navigation (not shown for agenda) */}
+          {/* Navigation row */}
           {view !== "agenda" && (
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+            <div className="flex items-center justify-between gap-2">
+              <Button variant="outline" size="sm" onClick={() => navigateCal(-1)}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <span className="font-semibold text-sm min-w-[160px] text-center">
+              <span className="font-semibold text-sm text-center flex-1 truncate">
                 {headerLabel}
               </span>
-              <Button variant="outline" size="sm" onClick={() => navigate(1)}>
+              <Button variant="outline" size="sm" onClick={() => navigateCal(1)}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentDate(nowJerusalem())}
-              >
+              <Button variant="outline" size="sm" onClick={() => setCurrentDate(nowJerusalem())}>
                 Today
               </Button>
             </div>
@@ -766,55 +839,33 @@ export default function AvailabilityCalendar() {
           </Card>
         ) : (
           <>
-            {/* Calendar views */}
             {view === "month" && (
-              <MonthView
-                currentDate={currentDate}
-                availableSlots={availableSlots}
-                onSlotClick={setSelectedSlot}
-              />
+              <MonthView currentDate={currentDate} availableSlots={availableSlots} onSlotClick={setSelectedSlot} />
             )}
             {view === "week" && (
-              <WeekView
-                currentDate={currentDate}
-                availableSlots={availableSlots}
-                onSlotClick={setSelectedSlot}
-              />
+              <WeekView currentDate={currentDate} availableSlots={availableSlots} onSlotClick={setSelectedSlot} />
             )}
             {view === "day" && (
-              <DayView
-                currentDate={currentDate}
-                availableSlots={availableSlots}
-                onSlotClick={setSelectedSlot}
-              />
+              <DayView currentDate={currentDate} availableSlots={availableSlots} onSlotClick={setSelectedSlot} />
             )}
             {view === "agenda" && (
-              <AgendaView
-                availableSlots={availableSlots}
-                onSlotClick={setSelectedSlot}
-              />
+              <AgendaView availableSlots={availableSlots} onSlotClick={setSelectedSlot} />
             )}
 
-            {/* Repeating legend (for month/week/day views) */}
+            {/* Repeating legend (month/week/day views) */}
             {view !== "agenda" && repeatingSlots.length > 0 && (
               <Card className="p-4 bg-green-50 border-green-200 mt-6">
                 <div className="flex items-center gap-2 mb-2">
                   <Repeat className="h-5 w-5 text-green-700" />
-                  <h3 className="font-bold text-green-800">
-                    Ongoing / Repeating Availability
-                  </h3>
+                  <h3 className="font-bold text-green-800">Ongoing / Repeating Availability</h3>
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-2">
                   {repeatingSlots.map((slot, i) => (
-                    <div
-                      key={i}
-                      className="flex items-start gap-2 text-sm text-green-800"
-                    >
+                    <div key={i} className="flex items-start gap-2 text-sm text-green-800">
                       <Repeat className="h-4 w-4 flex-shrink-0 mt-0.5 text-green-600" />
                       <span>
                         <strong>{format(parseISO(slot.date), "EEEE")}</strong> from{" "}
-                        <strong>{slot.startTime}</strong> —{" "}
-                        {slot.repeatingLabel}
+                        <strong>{slot.startTime}</strong> — {slot.repeatingLabel}
                       </span>
                     </div>
                   ))}
@@ -825,7 +876,7 @@ export default function AvailabilityCalendar() {
             {/* CTA */}
             <div className="text-center mt-8">
               <Link href="/booking">
-                <Button size="lg" className="gradient-pink text-primary-foreground">
+                <Button size="lg" className="gradient-pink text-black">
                   <Calendar className="mr-2 h-5 w-5" />
                   Go to Full Booking Form
                 </Button>
@@ -835,7 +886,6 @@ export default function AvailabilityCalendar() {
         )}
       </div>
 
-      {/* Book modal */}
       <BookModal slot={selectedSlot} onClose={() => setSelectedSlot(null)} />
     </div>
   );
