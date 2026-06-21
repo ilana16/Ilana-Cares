@@ -12,7 +12,7 @@ export default function Home() {
             Ilana Cares
           </h1>
           <h2 className="text-2xl md:text-3xl text-muted-foreground font-medium">
-            English Speaking Babysitter In the Givat Shaul & Kiryat Moshe Area
+            English Speaking Babysitter In Jerusalem
           </h2>
         </div>
 
