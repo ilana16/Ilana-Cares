@@ -10,6 +10,7 @@ import Rates from "./pages/Rates";
 import Booking from "./pages/Booking";
 import Payment from "./pages/Payment";
 import Contact from "./pages/Contact";
+import AvailabilityCalendar from "./pages/AvailabilityCalendar";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -21,6 +22,7 @@ function Router() {
       <Route path="/booking" component={Booking} />
       <Route path="/payment" component={Payment} />
       <Route path="/contact" component={Contact} />
+      <Route path="/availability-calendar" component={AvailabilityCalendar} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

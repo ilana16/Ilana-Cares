@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import { CalendarDays } from "lucide-react";
 
 export default function Home() {
   return (
@@ -50,8 +51,15 @@ export default function Home() {
             </Button>
           </Link>
           
+          <Link href="/availability-calendar">
+            <Button className="nav-button w-full gradient-green text-white flex items-center justify-center gap-2">
+              <CalendarDays className="h-5 w-5" />
+              View Availability
+            </Button>
+          </Link>
+
           <Link href="/contact">
-            <Button className="nav-button w-full md:col-span-2 gradient-pink text-primary-foreground">
+            <Button className="nav-button w-full gradient-pink text-primary-foreground">
               Contact
             </Button>
           </Link>

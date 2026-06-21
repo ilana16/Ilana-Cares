@@ -5,8 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "wouter";
-import { Home, ChevronLeft, ChevronRight, Calendar, Clock, User, CheckCircle } from "lucide-react";
-import { useState, useMemo } from "react";
+import { Home, ChevronLeft, ChevronRight, Calendar, Clock, User, CheckCircle, CalendarDays } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { toZonedTime, fromZonedTime, format as formatTz } from 'date-fns-tz';
@@ -14,10 +14,19 @@ import { toZonedTime, fromZonedTime, format as formatTz } from 'date-fns-tz';
 const JERUSALEM_TZ = 'Asia/Jerusalem';
 
 export default function Booking() {
-  const [step, setStep] = useState(1);
-  const [duration, setDuration] = useState(2);
-  const [selectedDate, setSelectedDate] = useState("");
-  const [selectedTime, setSelectedTime] = useState("");
+  // Read pre-fill params from URL query string (set by AvailabilityCalendar page)
+  const searchParams = new URLSearchParams(window.location.search);
+  const prefillDate = searchParams.get("date") || "";
+  const prefillTime = searchParams.get("startTime") || "";
+  const prefillDuration = parseInt(searchParams.get("duration") || "2", 10);
+
+  // Determine initial step: if date+time pre-filled, jump to step 4 (contact info)
+  const initialStep = prefillDate && prefillTime ? 4 : 1;
+
+  const [step, setStep] = useState(initialStep);
+  const [duration, setDuration] = useState(prefillDuration >= 2 && prefillDuration <= 10 ? prefillDuration : 2);
+  const [selectedDate, setSelectedDate] = useState(prefillDate);
+  const [selectedTime, setSelectedTime] = useState(prefillTime);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -238,7 +247,15 @@ export default function Booking() {
           </Button>
         </Link>
 
-        <h1 className="text-5xl font-bold text-center mb-4">Availability & Booking</h1>
+        <div className="flex flex-col sm:flex-row items-center justify-between mb-4 gap-3">
+          <h1 className="text-5xl font-bold text-center">Availability & Booking</h1>
+          <Link href="/availability-calendar">
+            <Button className="gradient-green text-white flex items-center gap-2 whitespace-nowrap">
+              <CalendarDays className="h-4 w-4" />
+              View Availability
+            </Button>
+          </Link>
+        </div>
         
         {/* General Hours */}
         <Card className="p-6 mb-8 gradient-yellow">
