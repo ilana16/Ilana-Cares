@@ -32,16 +32,13 @@ export default function About() {
           
           <div className="prose prose-lg max-w-none text-foreground">
             <p className="text-lg leading-relaxed">
-              Hi, I am Ilana.
-            </p>
-            <p className="text-lg leading-relaxed">
-              I am a patient, responsible, 24-year-old with 10+ years of childcare experience. 
-              My Hebrew needs work, but I can communicate. I completed a Hatzalah course which 
-              certified me as an EMT (חובשת) in both Israel and America. I can cook meals, and 
-              I keep Kosher and Shabbat. I am great at finding creative ways to keep kids engaged, 
-              happy and safe. I have experience caring for high functioning special needs children, 
-              and children and babies of all ages. I am also willing to do some light housework, 
-              and have experience in basic home maintenance.
+              Hi, my name is Ilana Devorah Silverman. I am a patient, responsible, 25-year-old
+              with 10+ years of childcare experience. My Hebrew needs work, but I can communicate.
+              I completed a Hatzalah course which certified me as an EMT (חובשת) in both Israel
+              and America. I can cook meals, and I keep Kosher and Shabbat. I am great at finding
+              creative ways to keep kids engaged, happy and safe. I have experience caring for high
+              functioning special needs children, and children and babies of all ages. I am also
+              willing to do some light housework, and have experience in basic home maintenance.
             </p>
           </div>
         </Card>
