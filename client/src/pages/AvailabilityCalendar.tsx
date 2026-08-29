@@ -705,7 +705,7 @@ function BookModal({
               <SelectContent>
                 {[2, 3, 4, 5, 6, 7, 8, 9, 10].map((h) => (
                   <SelectItem key={h} value={String(h)}>
-                    {h} hour{h !== 1 ? "s" : ""} (₪{50 * h})
+                    {h} hour{h !== 1 ? "s" : ""} (₪{60 * h})
                   </SelectItem>
                 ))}
               </SelectContent>

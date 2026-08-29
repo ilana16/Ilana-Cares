@@ -36,7 +36,7 @@ export default function Rates() {
                   Base Rate for 1 Child
                 </h3>
                 <p className="text-3xl font-bold text-secondary-foreground">
-                  ₪50/hour
+                  ₪60/hour
                 </p>
               </div>
             </div>

@@ -319,7 +319,7 @@ export default function Booking() {
                   </span>
                 </div>
                 <p className="text-sm text-secondary-foreground">
-                  Base rate: ₪{50 * duration} ({duration} hours × ₪50/hour)
+                  Base rate: ₪{60 * duration} ({duration} hours × ₪60/hour)
                 </p>
               </div>
             </div>
