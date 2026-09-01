@@ -94,22 +94,24 @@ export default function Contact() {
           <Card className="p-6 gradient-blue text-center">
             <Mail className="h-12 w-12 text-secondary-foreground mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-secondary-foreground mb-2">Email</h3>
-            <a 
-              href="mailto:Ilanadevorah25@gmail.com"
-              className="text-secondary-foreground hover:underline"
-            >
-              Ilanadevorah25@gmail.com
+            <p className="text-secondary-foreground mb-4">Ilanadevorah25@gmail.com</p>
+            <a href="mailto:Ilanadevorah25@gmail.com">
+              <Button className="w-full nav-button gradient-pink text-primary-foreground">
+                <Mail className="mr-2 h-4 w-4" />
+                Send Email
+              </Button>
             </a>
           </Card>
           
           <Card className="p-6 gradient-purple text-center">
             <Phone className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-muted-foreground mb-2">Phone / WhatsApp</h3>
-            <a 
-              href="tel:+972505298803"
-              className="text-muted-foreground hover:underline"
-            >
-              +972-50-529-8803
+            <p className="text-muted-foreground mb-4">+972-50-529-8803</p>
+            <a href="tel:+972505298803">
+              <Button className="w-full nav-button gradient-pink text-primary-foreground">
+                <Phone className="mr-2 h-4 w-4" />
+                Call Now
+              </Button>
             </a>
           </Card>
         </div>
