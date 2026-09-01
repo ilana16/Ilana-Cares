@@ -276,6 +276,9 @@ export default function Booking() {
           <p className="mt-4 text-sm italic text-accent-foreground">
             Note: Bookings require at least 42 hours advance notice
           </p>
+          <p className="mt-2 text-sm italic text-accent-foreground">
+            Availability is not final. If you need a time marked as unavailable, please contact Ilana to confirm availability status.
+          </p>
         </Card>
 
         {/* Booking Form */}

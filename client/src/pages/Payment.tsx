@@ -9,7 +9,7 @@ export default function Payment() {
   const [copiedBit, setCopiedBit] = useState(false);
   const [copiedPaybox, setCopiedPaybox] = useState(false);
 
-  const paymentNumber = "0505298803";
+  const paymentNumber = "0587555681";
 
   const copyToClipboard = (text: string, type: 'bit' | 'paybox') => {
     navigator.clipboard.writeText(text).then(() => {
@@ -52,7 +52,7 @@ export default function Payment() {
         </Card>
 
         {/* Payment Options */}
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
+        <div className="grid md:grid-cols-3 gap-6 mb-8">
           {/* Bit Payment */}
           <Card className="p-8 gradient-pink">
             <div className="text-center space-y-6">
@@ -117,6 +117,29 @@ export default function Payment() {
             </div>
           </Card>
 
+          {/* PayPal Payment */}
+          <Card className="p-8 gradient-blue">
+            <div className="text-center space-y-6">
+              <div className="w-20 h-20 mx-auto bg-secondary rounded-full flex items-center justify-center">
+                <span className="text-3xl font-bold text-secondary-foreground">P</span>
+              </div>
+              <h2 className="text-3xl font-bold text-secondary-foreground">PayPal</h2>
+              <div className="bg-white/50 p-6 rounded-lg">
+                <p className="text-sm text-secondary-foreground mb-2">Pay securely with PayPal</p>
+              </div>
+              <a
+                href="https://www.paypal.me/IlanaDSilverman"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block"
+              >
+                <Button className="w-full nav-button gradient-pink text-primary-foreground">
+                  Pay Now with PayPal
+                </Button>
+              </a>
+            </div>
+          </Card>
+
         </div>
 
         {/* How It Works */}
@@ -146,7 +169,7 @@ export default function Payment() {
                 3
               </div>
               <p className="pt-1">
-                <strong>Make payment</strong> using Bit or Paybox with the number above
+                <strong>Make payment</strong> using Bit, Paybox, or PayPal
               </p>
             </div>
             <div className="flex gap-4">

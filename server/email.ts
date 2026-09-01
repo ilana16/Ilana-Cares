@@ -3,7 +3,7 @@ import { Resend } from 'resend';
 // Email configuration using Resend
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const EMAIL_FROM = process.env.EMAIL_FROM || 'Ilana Cares <onboarding@resend.dev>';
-const EMAIL_TO = process.env.EMAIL_TO || 'ilana.cunningham16@gmail.com';
+const EMAIL_TO = process.env.EMAIL_TO || 'Ilanadevorah25@gmail.com';
 
 // Initialize Resend client
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;

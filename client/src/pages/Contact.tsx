@@ -95,10 +95,10 @@ export default function Contact() {
             <Mail className="h-12 w-12 text-secondary-foreground mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-secondary-foreground mb-2">Email</h3>
             <a 
-              href="mailto:ilana.cunningham16@gmail.com"
+              href="mailto:Ilanadevorah25@gmail.com"
               className="text-secondary-foreground hover:underline"
             >
-              ilana.cunningham16@gmail.com
+              Ilanadevorah25@gmail.com
             </a>
           </Card>
           

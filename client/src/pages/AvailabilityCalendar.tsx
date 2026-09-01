@@ -794,6 +794,9 @@ export default function AvailabilityCalendar() {
             <span><strong>Not available:</strong> Fri & Sat</span>
             <span><strong>Advance notice:</strong> At least 42 hours</span>
           </div>
+          <p className="text-sm text-accent-foreground mt-2 italic">
+            Availability is not final. If you need a time marked as unavailable, please contact Ilana to confirm availability status.
+          </p>
         </Card>
 
         {/* View switcher + navigation */}
