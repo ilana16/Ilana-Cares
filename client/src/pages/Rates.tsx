@@ -26,20 +26,35 @@ export default function Rates() {
         {/* Rates Card */}
         <Card className="p-8 gradient-blue mb-8">
           <div className="space-y-6">
-            {/* Base Rate */}
+            {/* Regular Rate */}
             <div className="flex items-start gap-4 p-4 bg-white/50 rounded-lg">
               <div className="p-3 bg-secondary rounded-full">
                 <Users className="h-6 w-6 text-secondary-foreground" />
               </div>
               <div className="flex-1">
                 <h3 className="text-xl font-semibold text-secondary-foreground mb-2">
-                  Base Rate for 1 Child
+                  Regular Rate
                 </h3>
                 <p className="text-3xl font-bold text-secondary-foreground">
-                  ₪60/hour
+                  Starting at ₪60/hour
                 </p>
               </div>
             </div>
+
+            {/* Chag / High Demand Rate */}
+            <div className="flex items-start gap-4 p-4 bg-white/50 rounded-lg">
+              <div className="p-3 bg-secondary rounded-full">
+                <Star className="h-6 w-6 text-secondary-foreground" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-semibold text-secondary-foreground mb-2">
+                  Chag / High Demand Rate
+                </h3>
+                <p className="text-3xl font-bold text-secondary-foreground">
+                  Starting at ₪70/hour
+                </p>
+              </div>
+            </div> 
 
             {/* Minimum Duration */}
             <div className="flex items-start gap-4 p-4 bg-white/50 rounded-lg">
@@ -62,13 +77,13 @@ export default function Rates() {
                 <Star className="h-6 w-6 text-secondary-foreground" />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-semibold text-secondary-foreground mb-2">
-                  Custom Pricing Available For:
+                  <h3 className="text-xl font-semibold text-secondary-foreground mb-2">
+                  Additional Care Pricing
                 </h3>
                 <ul className="space-y-2 text-secondary-foreground">
                   <li className="flex items-center gap-2">
                     <span className="w-2 h-2 bg-secondary-foreground rounded-full"></span>
-                    Overnights
+                    Very late hours
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="w-2 h-2 bg-secondary-foreground rounded-full"></span>
@@ -76,11 +91,11 @@ export default function Rates() {
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="w-2 h-2 bg-secondary-foreground rounded-full"></span>
-                    Special needs children
+                    Infants
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="w-2 h-2 bg-secondary-foreground rounded-full"></span>
-                    Housework
+                    Especially demanding care
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="w-2 h-2 bg-secondary-foreground rounded-full"></span>
@@ -88,7 +103,7 @@ export default function Rates() {
                   </li>
                 </ul>
                 <p className="mt-3 text-sm italic">
-                  Rates for these services are priced upon request
+                  Rates are higher for multiple children, very late hours, infants, or especially demanding care
                 </p>
               </div>
             </div>

@@ -322,7 +322,7 @@ export default function Booking() {
                   </span>
                 </div>
                 <p className="text-sm text-secondary-foreground">
-                  Base rate: ₪{60 * duration} ({duration} hours × ₪60/hour)
+                  Regular rate: ₪{60 * duration} ({duration} hours × ₪60/hour). Higher for multiple children, very late hours, infants, or especially demanding care.
                 </p>
               </div>
             </div>
