@@ -36,12 +36,14 @@ describe("reviews workflow", () => {
   it("saves a public submission as pending and sends an email", async () => {
     await caller.submit({
       publicName: "Parent",
+      email: "parent@example.com",
       rating: 5,
       comment: "Wonderful care",
       consent: true,
     });
     expect(values).toHaveBeenCalledWith({
       publicName: "Parent",
+      email: "parent@example.com",
       rating: 5,
       comment: "Wonderful care",
       status: "pending",
@@ -49,6 +51,7 @@ describe("reviews workflow", () => {
     expect(mocks.email).toHaveBeenCalledWith(
       expect.objectContaining({ id: 42, publicName: "Parent", rating: 5 })
     );
+    expect(mocks.email.mock.calls[0][0]).not.toHaveProperty("email");
     expect(update).toHaveBeenCalled();
   });
   it("keeps failed email delivery queued without losing the review", async () => {
@@ -56,6 +59,7 @@ describe("reviews workflow", () => {
     await expect(
       caller.submit({
         publicName: "Parent",
+        email: "parent@example.com",
         rating: 4,
         comment: "Good",
         consent: true,
@@ -76,11 +80,13 @@ describe("reviews workflow", () => {
       "notificationSentAt"
     );
     expect(Object.keys(select.mock.calls[0][0])).not.toContain("status");
+    expect(Object.keys(select.mock.calls[0][0])).not.toContain("email");
   });
   it.each([0, 6, 2.5])("rejects invalid rating %s", async rating => {
     await expect(
       caller.submit({
         publicName: "Parent",
+        email: "parent@example.com",
         rating,
         comment: "Good",
         consent: true,
@@ -92,6 +98,7 @@ describe("reviews workflow", () => {
     await expect(
       caller.submit({
         publicName: "Parent",
+        email: "parent@example.com",
         rating: 5,
         comment: "Good",
         consent: false,
@@ -100,6 +107,7 @@ describe("reviews workflow", () => {
     await expect(
       caller.submit({
         publicName: "Parent",
+        email: "parent@example.com",
         rating: 5,
         comment: "Good",
         consent: true,
@@ -108,6 +116,21 @@ describe("reviews workflow", () => {
     ).rejects.toBeDefined();
     expect(values).not.toHaveBeenCalled();
   });
+  it.each([undefined, "invalid"])(
+    "requires a valid private email: %s",
+    async email => {
+      await expect(
+        caller.submit({
+          publicName: "Parent",
+          email,
+          rating: 5,
+          comment: "Good",
+          consent: true,
+        } as any)
+      ).rejects.toBeDefined();
+      expect(values).not.toHaveBeenCalled();
+    }
+  );
   it("blocks every admin endpoint before any database access", async () => {
     for (const call of [
       () => caller.adminList({ token: "fake" }),

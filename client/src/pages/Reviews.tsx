@@ -31,6 +31,7 @@ export default function Reviews() {
     onSuccess: () => setSubmitted(true),
   });
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState("");
@@ -47,6 +48,7 @@ export default function Reviews() {
     setValidation("");
     submit.mutate({
       publicName: name,
+      email,
       rating,
       comment,
       consent: true,
@@ -81,6 +83,8 @@ export default function Reviews() {
                 onClick={() => {
                   setSubmitted(false);
                   setName("");
+                  setEmail("");
+                  setHoverRating(0);
                   setRating(0);
                   setComment("");
                   setConsent(false);
@@ -104,6 +108,23 @@ export default function Reviews() {
                 />
                 <p className="text-sm mt-2">
                   Choose the name you want shown with your review.
+                </p>
+              </div>
+              <div>
+                <Label htmlFor="review-email">Email address</Label>
+                <Input
+                  id="review-email"
+                  type="email"
+                  autoComplete="email"
+                  className="mt-2"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
+                  maxLength={320}
+                />
+                <p className="text-sm mt-2">
+                  Only Ilana can see your email address. It will not appear with
+                  your review.
                 </p>
               </div>
               <fieldset>

@@ -55,7 +55,14 @@ export async function retryReviewNotifications() {
       .where(isNull(reviews.notificationSentAt))
       .limit(20);
     for (const review of pending) {
-      if (await sendReviewEmail(review))
+      if (
+        await sendReviewEmail({
+          id: review.id,
+          publicName: review.publicName,
+          rating: review.rating,
+          comment: review.comment,
+        })
+      )
         await db
           .update(reviews)
           .set({ notificationSentAt: new Date() })
@@ -88,6 +95,7 @@ export const reviewsRouter = router({
     .input(
       z.object({
         publicName: z.string().trim().min(1).max(80),
+        email: z.string().trim().email().max(320),
         rating: z.number().int().min(1).max(5),
         comment: z.string().trim().min(1).max(3000),
         consent: z.literal(true),
@@ -102,16 +110,22 @@ export const reviewsRouter = router({
         });
       limitSubmissions(ctx.req.ip ?? ctx.req.socket.remoteAddress ?? "unknown");
       const db = await database();
-      const result = await db
-        .insert(reviews)
-        .values({
+      const result = await db.insert(reviews).values({
+        publicName: input.publicName,
+        email: input.email,
+        rating: input.rating,
+        comment: input.comment,
+        status: "pending",
+      });
+      const id = result[0].insertId;
+      if (
+        await sendReviewEmail({
+          id,
           publicName: input.publicName,
           rating: input.rating,
           comment: input.comment,
-          status: "pending",
-        });
-      const id = result[0].insertId;
-      if (await sendReviewEmail({ id, ...input })) {
+        })
+      ) {
         await db
           .update(reviews)
           .set({ notificationSentAt: new Date() })

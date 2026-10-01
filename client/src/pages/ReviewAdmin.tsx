@@ -51,6 +51,16 @@ function ReviewRow({
         </div>
         <Rating value={review.rating} />
       </div>
+      <p className="text-sm break-words">
+        Email (private):{" "}
+        {review.email ? (
+          <a href={`mailto:${review.email}`} className="underline">
+            {review.email}
+          </a>
+        ) : (
+          "Not provided on older review"
+        )}
+      </p>
       <p className="whitespace-pre-wrap break-words" dir="auto">
         {review.comment}
       </p>

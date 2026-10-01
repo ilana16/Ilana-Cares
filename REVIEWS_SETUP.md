@@ -1,7 +1,9 @@
 # Reviews
 
 The homepage links to `/reviews`. Visitors can submit a public display name,
-1–5 star rating and written review without signing in. Submissions are stored
+private email address, 1–5 star rating and written review without signing in.
+The email is required for new submissions and appears only in the admin dashboard
+only, never in the public reviews API or notification email. Submissions are stored
 as pending; the public endpoint returns only approved reviews.
 
 `/admin` accepts Google sign-in only for `Ilanadevorah25@gmail.com`.
