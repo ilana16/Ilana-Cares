@@ -4,7 +4,7 @@ The homepage links to `/reviews`. Visitors can submit a public display name,
 1–5 star rating and written review without signing in. Submissions are stored
 as pending; the public endpoint returns only approved reviews.
 
-`/admin/reviews` accepts Google sign-in only for `Ilanadevorah25@gmail.com`.
+`/admin` accepts Google sign-in only for `Ilanadevorah25@gmail.com`.
 Every admin API call verifies the signed Firebase ID token, project, issuer,
 expiry, verified email and Google provider on the server. Administrators can
 approve, reject, unpublish, delete and reply to reviews.

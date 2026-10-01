@@ -240,11 +240,6 @@ export default function Reviews() {
             </Card>
           ))}
         </section>
-        <div className="text-center">
-          <Link href="/admin/reviews" className="text-sm underline">
-            Admin sign-in
-          </Link>
-        </div>
       </div>
     </main>
   );

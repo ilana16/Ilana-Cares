@@ -132,7 +132,7 @@ export async function sendReviewEmail(review: { id: number; publicName: string; 
       from: EMAIL_FROM,
       to: 'Ilanadevorah25@gmail.com',
       subject: 'New Ilana Cares review awaiting approval',
-      text: `A new review is awaiting your approval.\n\nPublic name: ${review.publicName}\nRating: ${review.rating}/5\n\n${review.comment}\n\nReview and reply: https://ilanacares.com/admin/reviews`,
+      text: `A new review is awaiting your approval.\n\nPublic name: ${review.publicName}\nRating: ${review.rating}/5\n\n${review.comment}\n\nReview and reply: https://ilanacares.com/admin`,
     }, { idempotencyKey: `review-submission-${review.id}` });
     if (error) console.error('[Reviews] Email delivery failed:', error.name);
     return !error;
