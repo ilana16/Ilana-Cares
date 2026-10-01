@@ -57,6 +57,10 @@ export default function Home() {
             </Button>
           </Link>
 
+          <Link href="/reviews">
+            <Button className="nav-button w-full gradient-blue text-black">Reviews</Button>
+          </Link>
+
           <Link href="/contact">
             <Button className="nav-button w-full gradient-pink text-black">
               Contact

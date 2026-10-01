@@ -12,11 +12,16 @@ import Payment from "./pages/Payment";
 import Contact from "./pages/Contact";
 import AvailabilityCalendar from "./pages/AvailabilityCalendar";
 
+import Reviews from "./pages/Reviews";
+import ReviewAdmin from "./pages/ReviewAdmin";
+
 function Router() {
   // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
       <Route path={"/"} component={Home} />
+      <Route path="/reviews" component={Reviews} />
+      <Route path="/admin/reviews" component={ReviewAdmin} />
       <Route path="/about" component={About} />
       <Route path="/rates" component={Rates} />
       <Route path="/booking" component={Booking} />

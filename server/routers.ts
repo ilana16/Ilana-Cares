@@ -9,7 +9,10 @@ import { fetchBusyTimes } from "./calendar";
 import { appendBookingToSheet } from "./sheets";
 import { sendBookingEmail, sendContactEmail } from "./email";
 
+import { reviewsRouter } from "./reviews";
+
 export const appRouter = router({
+  reviews: reviewsRouter,
   system: systemRouter,
 
   auth: router({

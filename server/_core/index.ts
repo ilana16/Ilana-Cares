@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
 import net from "net";
+import { retryReviewNotifications } from "../reviews";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
@@ -45,6 +46,8 @@ async function startServer() {
     await runMigrations();
   }
   const app = express();
+  // Railway terminates TLS and forwards the visitor address through its proxy.
+  app.set("trust proxy", 1);
   const server = createServer(app);
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
@@ -65,6 +68,10 @@ async function startServer() {
       createContext,
     })
   );
+  if (process.env.NODE_ENV === "production") {
+    void retryReviewNotifications();
+    setInterval(() => void retryReviewNotifications(), 60000).unref();
+  }
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);

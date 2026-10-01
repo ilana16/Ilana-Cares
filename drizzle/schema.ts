@@ -53,3 +53,14 @@ export const contacts = mysqlTable("contacts", {
 export type Contact = typeof contacts.$inferSelect;
 export type InsertContact = typeof contacts.$inferInsert;
 
+
+export const reviews = mysqlTable("reviews", {
+  id: int("id").primaryKey().autoincrement(),
+  publicName: varchar("publicName", { length: 80 }).notNull(),
+  rating: int("rating").notNull(),
+  comment: text("comment").notNull(),
+  status: mysqlEnum("status", ["pending", "approved", "rejected"]).default("pending").notNull(),
+  reply: text("reply"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  notificationSentAt: timestamp("notificationSentAt"),
+});
