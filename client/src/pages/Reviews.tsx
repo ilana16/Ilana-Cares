@@ -32,6 +32,7 @@ export default function Reviews() {
   });
   const [name, setName] = useState("");
   const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState("");
   const [consent, setConsent] = useState(false);
   const [website, setWebsite] = useState("");
@@ -109,29 +110,42 @@ export default function Reviews() {
                 <legend className="text-sm font-medium mb-2">
                   Your rating
                 </legend>
-                <div className="flex flex-wrap gap-2">
+                <div
+                  className="flex items-center gap-1 w-fit"
+                  onMouseLeave={() => setHoverRating(0)}
+                >
                   {[1, 2, 3, 4, 5].map(n => (
                     <label
                       key={n}
-                      className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer ${rating === n ? "bg-white border-black" : "border-gray-400"}`}
+                      className="relative flex h-12 w-12 items-center justify-center cursor-pointer rounded-md"
+                      onMouseEnter={() => setHoverRating(n)}
                     >
                       <input
                         type="radio"
                         name="rating"
                         value={n}
                         checked={rating === n}
-                        onChange={() => setRating(n)}
+                        onChange={() => {
+                          setRating(n);
+                          setValidation("");
+                        }}
+                        aria-label={`${n} out of 5 stars`}
+                        className="peer sr-only"
                         required
                       />
-                      <span>
-                        {n} <span aria-hidden="true">★</span>
-                        <span className="sr-only">
-                          {n === 1 ? "star" : "stars"}
-                        </span>
-                      </span>
+                      <Star
+                        aria-hidden="true"
+                        className={`h-9 w-9 transition-colors peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-black rounded-sm ${n <= (hoverRating || rating) ? "text-amber-600 fill-amber-500" : "text-gray-500 fill-transparent"}`}
+                        strokeWidth={1.5}
+                      />
                     </label>
                   ))}
                 </div>
+                <p className="text-sm mt-2" aria-live="polite">
+                  {rating
+                    ? `${rating} out of 5 stars`
+                    : "Select a star to rate your experience"}
+                </p>
               </fieldset>
               <div>
                 <Label htmlFor="review-comment">Your review</Label>
