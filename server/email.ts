@@ -2,7 +2,7 @@ import { Resend } from 'resend';
 
 // Email configuration using Resend
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const EMAIL_FROM = process.env.EMAIL_FROM || 'Ilana Cares <onboarding@resend.dev>';
+const EMAIL_FROM = process.env.EMAIL_FROM || 'Ilana Care <onboarding@resend.dev>';
 const EMAIL_TO = process.env.EMAIL_TO || 'Ilanadevorah25@gmail.com';
 
 // Initialize Resend client
@@ -131,7 +131,7 @@ export async function sendReviewEmail(review: { id: number; publicName: string; 
     const { error } = await resend.emails.send({
       from: EMAIL_FROM,
       to: 'Ilanadevorah25@gmail.com',
-      subject: 'New Ilana Cares review awaiting approval',
+      subject: 'New Ilana Care review awaiting approval',
       text: `A new review is awaiting your approval.\n\nPublic name: ${review.publicName}\nRating: ${review.rating}/5\n\n${review.comment}\n\nReview and reply: https://ilanacares.com/admin`,
     }, { idempotencyKey: `review-submission-${review.id}` });
     if (error) console.error('[Reviews] Email delivery failed:', error.name);
