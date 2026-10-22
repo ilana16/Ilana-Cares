@@ -4,6 +4,8 @@ The `d1-cutover` branch replaces the temporary Railway API proxy with native Pag
 
 ## Runtime
 
+Gmail HTTPS sending is preferred when `GMAIL_REFRESH_TOKEN` is configured. Enable the Gmail API in the same Google Cloud project as the existing OAuth client, then authorize only `https://www.googleapis.com/auth/gmail.send` while signed into `Ilanadevorah25@gmail.com`, using that client's credentials. Store the new refresh token as an encrypted Pages production secret named `GMAIL_REFRESH_TOKEN`. Keep `GOOGLE_REFRESH_TOKEN` for Calendar/Sheets unchanged. Redeploy after saving secrets. The sender and recipient are fixed to `Ilanadevorah25@gmail.com`, and the API URL explicitly identifies that account. API errors remain queued and never trigger an SMTP fallback, which could duplicate a message. Without the Gmail token, the existing app-password SMTP transport remains available.
+
 - Frontend build: `pnpm exec vite build`; output `dist/public`.
 - `wrangler.jsonc` binds `DB` to D1 `866021a6-e8ff-4c49-a18a-363a017f3f45`.
 - `functions/api/[[path]].ts` serves the existing tRPC endpoints using `cloudflare/api/router.ts`.

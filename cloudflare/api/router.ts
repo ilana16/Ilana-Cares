@@ -73,7 +73,7 @@ export async function flushNotifications(env: ApiEnv) {
     } catch (error) {
       // Persist only diagnostic categories, never SMTP responses, tokens or message content.
       const failure = error as { code?: string; responseCode?: number; message?: string };
-      const code = ["EAUTH", "ESOCKET", "ECONNECTION", "ETIMEDOUT", "EDNS", "EENVELOPE", "EMESSAGE", "ECONNRESET", "ECONNREFUSED"].includes(failure?.code || "") ? failure.code : "INTEGRATION_ERROR";
+      const code = ["EAUTH", "ESOCKET", "ECONNECTION", "ETIMEDOUT", "EDNS", "EENVELOPE", "EMESSAGE", "ECONNRESET", "ECONNREFUSED", "EGMAILAPI"].includes(failure?.code || "") ? failure.code : "INTEGRATION_ERROR";
       const status = Number.isInteger(failure?.responseCode) ? ` ${failure.responseCode}` : "";
       const detail = failure?.message?.includes("not implemented") ? " UNSUPPORTED_RUNTIME" : failure?.message === "Connection timeout" ? " CONNECT_TIMEOUT" : failure?.message === "Greeting never received" ? " GREETING_TIMEOUT" : "";
       await env.DB.prepare("UPDATE notification_outbox SET lastError=? WHERE id=?").bind(`${code}${status}${detail}`, job.id).run();
@@ -137,7 +137,7 @@ export const d1Router = t.router({
       }),
     adminList: admin.query(async ({ ctx }) => ({
       items: (await ctx.env.DB.prepare("SELECT * FROM reviews ORDER BY createdAt DESC,id DESC").all<ReviewRow>()).results.map(review),
-      emailConfigured: Boolean(ctx.env.GMAIL_APP_PASSWORD),
+      emailConfigured: Boolean(ctx.env.GMAIL_REFRESH_TOKEN || ctx.env.GMAIL_APP_PASSWORD),
     })),
     moderate: admin.input(idInput.extend({ status: z.enum(["approved","rejected","pending"]) })).mutation(async ({ ctx, input }) => {
       await ctx.env.DB.prepare("UPDATE reviews SET status=? WHERE id=?").bind(input.status,input.id).run(); return { success: true };

@@ -1,14 +1,15 @@
 import type { ApiEnv } from "./types";
 import nodemailer from "nodemailer";
+import { Buffer } from "node:buffer";
 
 export class CalendarIntegrationError extends Error {}
 
-export async function googleToken(env: ApiEnv): Promise<string | null> {
-  if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET || !env.GOOGLE_REFRESH_TOKEN) return null;
+export async function googleToken(env: ApiEnv, refreshToken = env.GOOGLE_REFRESH_TOKEN): Promise<string | null> {
+  if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET || !refreshToken) return null;
   const response = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     body: new URLSearchParams({ client_id: env.GOOGLE_CLIENT_ID, client_secret: env.GOOGLE_CLIENT_SECRET,
-      refresh_token: env.GOOGLE_REFRESH_TOKEN, grant_type: "refresh_token" }),
+      refresh_token: refreshToken, grant_type: "refresh_token" }),
     signal: AbortSignal.timeout(10000),
   });
   if (!response.ok) {
@@ -60,8 +61,31 @@ export async function busyTimes(env: ApiEnv) {
 }
 
 export async function email(env: ApiEnv, id: string, subject: string, text: string) {
-  if (!env.GMAIL_APP_PASSWORD) return false;
   const address = "Ilanadevorah25@gmail.com";
+  if (env.GMAIL_REFRESH_TOKEN) {
+    const token = await googleToken(env, env.GMAIL_REFRESH_TOKEN);
+    if (!token) throw new Error("Gmail OAuth client is not configured");
+    // Encode both the subject and UTF-8 body; user text cannot add MIME headers.
+    const encodedSubject = Buffer.from(subject, "utf8").toString("base64");
+    if (!/^[A-Za-z0-9._-]+$/.test(id)) throw new Error("Invalid notification identifier");
+    const body = Buffer.from(text, "utf8").toString("base64").match(/.{1,76}/g)?.join("\r\n") || "";
+    const mime = [`From: Ilana Care <${address}>`, `To: ${address}`,
+      `Subject: =?UTF-8?B?${encodedSubject}?=`, `Message-ID: <${id}@ilana.care>`,
+      `Date: ${new Date().toUTCString()}`, "MIME-Version: 1.0", "Content-Type: text/plain; charset=UTF-8",
+      "Content-Transfer-Encoding: base64", "", body].join("\r\n");
+    const response = await fetch(`https://gmail.googleapis.com/gmail/v1/users/${encodeURIComponent(address)}/messages/send`, {
+      method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ raw: Buffer.from(mime, "utf8").toString("base64url") }), signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) {
+      const error = new Error("Gmail API delivery unavailable") as Error & { code: string; responseCode: number };
+      error.code = "EGMAILAPI"; error.responseCode = response.status;
+      throw error; // Keep the durable job queued; never fall back after an ambiguous send.
+    }
+    const sent = await response.json() as { id?: string };
+    return Boolean(sent.id);
+  }
+  if (!env.GMAIL_APP_PASSWORD) return false;
   const transport = nodemailer.createTransport({
     host: "smtp.gmail.com", port: 587, secure: false, requireTLS: true,
     auth: { user: address, pass: env.GMAIL_APP_PASSWORD.replace(/\s/g, "") },
