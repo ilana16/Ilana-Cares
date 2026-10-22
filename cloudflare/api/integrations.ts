@@ -1,6 +1,8 @@
 import type { ApiEnv } from "./types";
 import nodemailer from "nodemailer";
 
+export class CalendarIntegrationError extends Error {}
+
 export async function googleToken(env: ApiEnv): Promise<string | null> {
   if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET || !env.GOOGLE_REFRESH_TOKEN) return null;
   const response = await fetch("https://oauth2.googleapis.com/token", {
@@ -29,7 +31,12 @@ export async function busyTimes(env: ApiEnv) {
   const result: { start: Date; end: Date; summary: string }[] = [];
   for (let page = 0; page < 10; page++) {
     const response = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {}, signal: AbortSignal.timeout(10000) });
-    if (!response.ok) throw new Error("Calendar is temporarily unavailable");
+    if (!response.ok) {
+      const body = await response.json().catch(() => null) as { error?: { errors?: { reason?: string }[] } } | null;
+      const reason = body?.error?.errors?.[0]?.reason;
+      const safeReason = ["keyInvalid", "accessNotConfigured", "forbidden", "notFound", "ipRefererBlocked", "dailyLimitExceeded", "rateLimitExceeded", "authError", "badRequest"].includes(reason || "") ? `, ${reason}` : "";
+      throw new CalendarIntegrationError(`Calendar availability is unavailable (Google ${response.status}${safeReason}). Please contact Ilana to confirm a time.`);
+    }
     const data: { items?: { status?: string; transparency?: string; start?: { dateTime?: string }; end?: { dateTime?: string } }[]; nextPageToken?: string } = await response.json();
     for (const event of data.items ?? []) {
       if (event.status === "cancelled" || event.transparency === "transparent") continue;

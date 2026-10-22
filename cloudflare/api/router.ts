@@ -2,7 +2,7 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { z } from "zod";
 import { requireReviewAdmin } from "../../server/reviewAuth";
-import { busyTimes, email, appendSheet } from "./integrations";
+import { busyTimes, email, appendSheet, CalendarIntegrationError } from "./integrations";
 import type { ApiEnv } from "./types";
 
 type Context = { env: ApiEnv; request: Request };
@@ -94,7 +94,7 @@ export const d1Router = t.router({
   booking: t.router({
     getBusyTimes: p.query(async ({ ctx }) => {
       try { return await busyTimes(ctx.env); }
-      catch { throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "Calendar availability is temporarily unavailable. Please contact Ilana to confirm a time." }); }
+      catch (error) { throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: error instanceof CalendarIntegrationError ? error.message : "Calendar availability is temporarily unavailable. Please contact Ilana to confirm a time." }); }
     }),
     submit: p.input(z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
       duration: z.number().min(2).max(10), fullName: z.string().trim().min(1).max(255), email: z.string().email().max(320),
