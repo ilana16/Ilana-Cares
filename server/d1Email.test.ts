@@ -17,7 +17,7 @@ describe("D1 Gmail notifications", () => {
     smtp.sendMail.mockResolvedValue({ accepted: ["Ilanadevorah25@gmail.com"] });
     expect(await email({ GMAIL_APP_PASSWORD: "test only value" } as ApiEnv, "job-1", "subject", "text")).toBe(true);
     expect(smtp.createTransport).toHaveBeenCalledWith(expect.objectContaining({
-      host: "smtp.gmail.com", port: 465, secure: true,
+      host: "smtp.gmail.com", port: 587, secure: false, requireTLS: true,
       auth: { user: "Ilanadevorah25@gmail.com", pass: "testonlyvalue" },
       disableFileAccess: true, disableUrlAccess: true,
     }));

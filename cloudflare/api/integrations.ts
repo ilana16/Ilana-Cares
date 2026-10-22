@@ -63,7 +63,7 @@ export async function email(env: ApiEnv, id: string, subject: string, text: stri
   if (!env.GMAIL_APP_PASSWORD) return false;
   const address = "Ilanadevorah25@gmail.com";
   const transport = nodemailer.createTransport({
-    host: "smtp.gmail.com", port: 465, secure: true,
+    host: "smtp.gmail.com", port: 587, secure: false, requireTLS: true,
     auth: { user: address, pass: env.GMAIL_APP_PASSWORD.replace(/\s/g, "") },
     connectionTimeout: 8000, greetingTimeout: 5000, socketTimeout: 10000,
     disableFileAccess: true, disableUrlAccess: true,

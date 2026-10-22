@@ -75,7 +75,7 @@ export async function flushNotifications(env: ApiEnv) {
       const failure = error as { code?: string; responseCode?: number; message?: string };
       const code = ["EAUTH", "ESOCKET", "ECONNECTION", "ETIMEDOUT", "EDNS", "EENVELOPE", "EMESSAGE", "ECONNRESET", "ECONNREFUSED"].includes(failure?.code || "") ? failure.code : "INTEGRATION_ERROR";
       const status = Number.isInteger(failure?.responseCode) ? ` ${failure.responseCode}` : "";
-      const detail = failure?.message?.includes("not implemented") ? " UNSUPPORTED_RUNTIME" : "";
+      const detail = failure?.message?.includes("not implemented") ? " UNSUPPORTED_RUNTIME" : failure?.message === "Connection timeout" ? " CONNECT_TIMEOUT" : failure?.message === "Greeting never received" ? " GREETING_TIMEOUT" : "";
       await env.DB.prepare("UPDATE notification_outbox SET lastError=? WHERE id=?").bind(`${code}${status}${detail}`, job.id).run();
       console.error("Notification integration unavailable", { kind: job.kind, code });
     }

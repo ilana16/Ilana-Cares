@@ -16,7 +16,7 @@ The `d1-cutover` branch replaces the temporary Railway API proxy with native Pag
 
 ## Before production cutover
 
-1. Transfer existing Railway integration settings into encrypted Cloudflare Pages production variables: `GOOGLE_API_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`, and `GOOGLE_SPREADSHEET_ID`. Set `GMAIL_APP_PASSWORD` as an encrypted Cloudflare Pages production secret using the new Gmail app password. The sender and recipient are `Ilanadevorah25@gmail.com`, using Gmail SMTP on port 465 with TLS. No Resend key is used by the D1 backend. Do not transfer MySQL credentials. Never commit secrets or customer exports.
+1. Transfer existing Railway integration settings into encrypted Cloudflare Pages production variables: `GOOGLE_API_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`, and `GOOGLE_SPREADSHEET_ID`. Set `GMAIL_APP_PASSWORD` as an encrypted Cloudflare Pages production secret using the new Gmail app password. The sender and recipient are `Ilanadevorah25@gmail.com`, using Gmail SMTP on port 587 with mandatory STARTTLS before authentication. No Resend key is used by the D1 backend. Do not transfer MySQL credentials. Never commit secrets or customer exports.
 2. Apply `cloudflare/runtime.sql` to remote D1. It only adds internal queue/rate-limit tables.
 3. Recheck all source MySQL rows against D1 immediately before switching. Import any newly received records without overwriting conflicts.
 4. Set the Pages production branch to the tested `d1-cutover` commit and deploy. Git-triggered builds read the D1 binding from `wrangler.jsonc`.
