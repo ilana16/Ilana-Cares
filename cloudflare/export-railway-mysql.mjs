@@ -28,7 +28,9 @@ if (fs.existsSync(output)) {
   console.error("Refusing to overwrite an existing private export: " + output);
   process.exit(1);
 }
-const db = await mysql.createConnection({uri, timezone:"Z", dateStrings:true, supportBigNumbers:true, bigNumberStrings:true});
+const u = new URL(uri);
+if (u.protocol !== "mysql:") throw new Error("Expected mysql:// connection URL");
+const db = await mysql.createConnection({host:u.hostname, port:Number(u.port || 3306), user:decodeURIComponent(u.username), password:decodeURIComponent(u.password), database:decodeURIComponent(u.pathname.slice(1)), timezone:"Z", dateStrings:true, supportBigNumbers:true, bigNumberStrings:true});
 const quoteIdentifier = x => "\"" + x.replaceAll("\"", "\"\"") + "\"";
 const sqlValue = x => {
   if (x === null || x === undefined) return "NULL";
@@ -36,7 +38,7 @@ const sqlValue = x => {
   if (typeof x === "bigint") return String(x);
   if (typeof x === "boolean") return x ? "1" : "0";
   const v = x instanceof Date ? x.toISOString().replace("T", " ").replace("Z", "") : String(x);
-  return "'" + v.replaceAll("'", "''").replaceAll("\\", "\\\\").replaceAll("\u0000", "") + "'";
+  return "'" + v.replaceAll("'", "''").replaceAll("\u0000", "") + "'";
 };
 let fd;
 try {
