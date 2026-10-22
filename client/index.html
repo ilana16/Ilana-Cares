@@ -38,12 +38,15 @@
   </head>
 
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-    <script
-      defer
-      src="%VITE_ANALYTICS_ENDPOINT%/umami"
-      data-website-id="%VITE_ANALYTICS_WEBSITE_ID%"
-    ></script>
+    <div id="root">
+      <main style="min-height:100vh;background:#fff8fc;color:#27212a;padding:48px 24px;text-align:center;font-family:system-ui,sans-serif">
+        <h1>Ilana Care</h1>
+        <p>English Speaking Babysitter In Jerusalem</p>
+        <p id="startup-message" role="status">Loading the website…</p>
+        <button onclick="window.location.reload()" style="padding:12px 24px;background:#f4c7df;color:#27212a;border:0;border-radius:12px;font:inherit;cursor:pointer">Reload page</button>
+        <noscript><p>Please enable JavaScript to use booking and contact forms.</p></noscript>
+      </main>
+    </div>
+    <script type="module" src="/src/bootstrap.ts"></script>
   </body>
 </html>

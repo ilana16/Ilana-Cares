@@ -1,5 +1,4 @@
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBjnXUYVgF3_sX4EjtVFrgwyXUt4Q1EKb8",
@@ -15,9 +14,12 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 // Initialize Analytics (only in browser)
-let analytics;
+let analytics: import("firebase/analytics").Analytics | undefined;
 if (typeof window !== 'undefined') {
-  analytics = getAnalytics(app);
+  // Optional tracking must never prevent the website or Firebase sign-in loading.
+  void import("firebase/analytics").then(async ({ isSupported, getAnalytics }) => {
+    if (await isSupported()) analytics = getAnalytics(app);
+  }).catch(() => { /* Tracking may be unavailable in private or restricted browsers. */ });
 }
 
 export { app, analytics };
