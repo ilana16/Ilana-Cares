@@ -16,7 +16,9 @@ export async function googleToken(env: ApiEnv): Promise<string | null> {
 }
 
 export async function busyTimes(env: ApiEnv) {
-  const token = await googleToken(env);
+  // Preserve the existing public-calendar API-key authentication. OAuth is for
+  // private Sheets writes and must not prevent calendar reads when it expires.
+  const token = env.GOOGLE_API_KEY ? null : await googleToken(env);
   if (!token && !env.GOOGLE_API_KEY) throw new Error("Calendar is not configured");
   const start = new Date();
   const end = new Date(start); end.setMonth(end.getMonth() + 3);

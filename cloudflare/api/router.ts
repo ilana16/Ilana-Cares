@@ -6,7 +6,7 @@ import { busyTimes, email, appendSheet } from "./integrations";
 import type { ApiEnv } from "./types";
 
 type Context = { env: ApiEnv; request: Request };
-const t = initTRPC.context<Context>().create({ transformer: superjson });
+const t = initTRPC.context<Context>().create({ transformer: superjson, isDev: false });
 const p = t.procedure;
 const tokenInput = z.object({ token: z.string().min(1).max(10000) });
 const admin = p.input(tokenInput).use(async ({ input, next }) => {
