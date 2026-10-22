@@ -44,7 +44,7 @@
 }
 
 :root {
-  /* Soft pastel color scheme for Ilana Cares */
+  /* Soft pastel color scheme for Ilana Care */
   --radius: 0.75rem;
   --background: oklch(0.99 0.01 340); /* Very light pink-white */
   --foreground: oklch(0.3 0.02 240); /* Dark gray for text */
