@@ -9,7 +9,7 @@ export default function Home() {
         {/* Header */}
         <div className="space-y-4">
           <h1 className="text-5xl md:text-6xl font-bold text-foreground">
-            Ilana Cares
+            Ilana Care
           </h1>
           <h2 className="text-2xl md:text-3xl text-muted-foreground font-medium">
             English Speaking Babysitter In Jerusalem
@@ -20,7 +20,7 @@ export default function Home() {
         <div className="flex justify-center py-6">
           <img
             src="/logo.png"
-            alt="Ilana Cares - Childcare with love and attention"
+            alt="Ilana Care - Childcare with love and attention"
             className="w-64 h-64 md:w-80 md:h-80 rounded-full shadow-lg object-cover"
           />
         </div>
