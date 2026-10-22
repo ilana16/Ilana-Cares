@@ -30,15 +30,17 @@ export default function About() {
             About Ilana
           </h1>
           
-          <div className="prose prose-lg max-w-none text-foreground">
+          <div className="prose prose-lg max-w-none text-foreground space-y-4">
             <p className="text-lg leading-relaxed">
-              Hi, my name is Ilana Devorah Silverman (maiden name, Cunningham). I am a patient, responsible, 25-year-old
-              with 10+ years of childcare experience. My Hebrew needs work, but I can communicate.
-              I completed a Hatzalah course which certified me as an EMT (חובשת) in both Israel
-              and America. I can cook meals, and I keep Kosher and Shabbat. I am great at finding
-              creative ways to keep kids engaged, happy and safe. I have experience caring for high
-              functioning special needs children, and children and babies of all ages. I am also
-              willing to do some light housework, and have experience in basic home maintenance.
+              Hi, my name is Ilana Devorah Silverman. I live in Givat Shaul with my husband. I made Aliyah about 4 years ago, and have successfully completed a Hatzalla EMT course. I have been in child care for over 10 years including daycares, ganim, babysitting, nannying, camps, and more. I keep kosher and shabbat. I have 3 standards I hold MYSELF to in childcare:
+            </p>
+            <ol className="list-decimal pl-6 space-y-3 text-lg leading-relaxed">
+              <li>Respect the children - they are people.</li>
+              <li>The parents are the parents - not me. What you say goes.</li>
+              <li>Unless otherwise specified by a parent, or for a reason of safety - I really try not to force the children to do things (especially without attempting to work with them first)</li>
+            </ol>
+            <p className="text-lg leading-relaxed">
+              I also have experience caring for high functioning special needs children, and children and babies of all ages. I am willing to do some light housework, and have experience in basic home maintenance.
             </p>
           </div>
         </Card>
