@@ -11,7 +11,11 @@ export async function googleToken(env: ApiEnv): Promise<string | null> {
       refresh_token: env.GOOGLE_REFRESH_TOKEN, grant_type: "refresh_token" }),
     signal: AbortSignal.timeout(10000),
   });
-  if (!response.ok) throw new Error("Google authorization unavailable");
+  if (!response.ok) {
+    const body = await response.json().catch(() => null) as { error?: string } | null;
+    const code = ["invalid_grant", "invalid_client", "unauthorized_client", "invalid_scope"].includes(body?.error || "") ? body!.error : `HTTP ${response.status}`;
+    throw new CalendarIntegrationError(`Google authorization unavailable (${code}). Please reconnect the Google integration.`);
+  }
   const result: { access_token?: string } = await response.json();
   if (!result.access_token) throw new Error("Google authorization unavailable");
   return result.access_token;
@@ -20,7 +24,7 @@ export async function googleToken(env: ApiEnv): Promise<string | null> {
 export async function busyTimes(env: ApiEnv) {
   // Preserve the existing public-calendar API-key authentication. OAuth is for
   // private Sheets writes and must not prevent calendar reads when it expires.
-  const token = env.GOOGLE_API_KEY ? null : await googleToken(env);
+  let token = env.GOOGLE_API_KEY ? null : await googleToken(env);
   if (!token && !env.GOOGLE_API_KEY) throw new Error("Calendar is not configured");
   const start = new Date();
   const end = new Date(start); end.setMonth(end.getMonth() + 3);
@@ -32,6 +36,12 @@ export async function busyTimes(env: ApiEnv) {
   for (let page = 0; page < 10; page++) {
     const response = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {}, signal: AbortSignal.timeout(10000) });
     if (!response.ok) {
+      if (!token && page === 0 && [401, 403].includes(response.status) && env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET && env.GOOGLE_REFRESH_TOKEN) {
+        token = await googleToken(env);
+        url.searchParams.delete("key");
+        page--;
+        continue;
+      }
       const body = await response.json().catch(() => null) as { error?: { errors?: { reason?: string }[] } } | null;
       const reason = body?.error?.errors?.[0]?.reason;
       const safeReason = ["keyInvalid", "accessNotConfigured", "forbidden", "notFound", "ipRefererBlocked", "dailyLimitExceeded", "rateLimitExceeded", "authError", "badRequest"].includes(reason || "") ? `, ${reason}` : "";
