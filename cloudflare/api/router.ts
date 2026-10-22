@@ -70,7 +70,15 @@ export async function flushNotifications(env: ApiEnv) {
         if (job.kind === "review") updates.push(env.DB.prepare("UPDATE reviews SET notificationSentAt=CURRENT_TIMESTAMP WHERE id=?").bind(job.recordId));
         await env.DB.batch(updates);
       }
-    } catch { console.error("Notification integration unavailable", { kind: job.kind }); }
+    } catch (error) {
+      // Persist only diagnostic categories, never SMTP responses, tokens or message content.
+      const failure = error as { code?: string; responseCode?: number; message?: string };
+      const code = ["EAUTH", "ESOCKET", "ECONNECTION", "ETIMEDOUT", "EDNS", "EENVELOPE", "EMESSAGE", "ECONNRESET", "ECONNREFUSED"].includes(failure?.code || "") ? failure.code : "INTEGRATION_ERROR";
+      const status = Number.isInteger(failure?.responseCode) ? ` ${failure.responseCode}` : "";
+      const detail = failure?.message?.includes("not implemented") ? " UNSUPPORTED_RUNTIME" : "";
+      await env.DB.prepare("UPDATE notification_outbox SET lastError=? WHERE id=?").bind(`${code}${status}${detail}`, job.id).run();
+      console.error("Notification integration unavailable", { kind: job.kind, code });
+    }
     if (!delivered) await env.DB.prepare("UPDATE notification_outbox SET leaseUntil=0,nextAttemptAt=? WHERE id=?")
       .bind(timestamp + Math.min(3600000, 60000 * 2 ** Math.min(job.attempts, 6)), job.id).run();
   }

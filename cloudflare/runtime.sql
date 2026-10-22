@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS notification_outbox (
   nextAttemptAt INTEGER NOT NULL DEFAULT 0,
   leaseUntil INTEGER NOT NULL DEFAULT 0,
   sentAt TEXT,
+  lastError TEXT,
   createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_notification_outbox_pending ON notification_outbox(sentAt,nextAttemptAt);
