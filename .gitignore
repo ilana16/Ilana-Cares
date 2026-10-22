@@ -105,3 +105,7 @@ temp/
 *.db
 *.sqlite
 *.sqlite3
+
+# Private Railway-to-D1 customer data exports
+cloudflare/*.private.sql
+cloudflare/*.private.json
