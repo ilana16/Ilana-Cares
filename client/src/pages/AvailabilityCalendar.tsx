@@ -729,7 +729,7 @@ export default function AvailabilityCalendar() {
   const [currentDate, setCurrentDate] = useState(() => nowJerusalem());
   const [selectedSlot, setSelectedSlot] = useState<AvailableSlot | null>(null);
 
-  const { data: rawBusyTimes = [], isLoading } = trpc.booking.getBusyTimes.useQuery();
+  const { data: rawBusyTimes = [], isLoading, error } = trpc.booking.getBusyTimes.useQuery();
   const minDate = useMemo(() => minBookableDate(), []);
 
   const dateRange = useMemo(() => {
@@ -748,9 +748,9 @@ export default function AvailabilityCalendar() {
   }, [view, currentDate]);
 
   const availableSlots = useMemo(() => {
-    if (isLoading) return [];
+    if (isLoading || error) return [];
     return buildAvailableSlots(dateRange, rawBusyTimes, minDate);
-  }, [dateRange, rawBusyTimes, minDate, isLoading]);
+  }, [dateRange, rawBusyTimes, minDate, isLoading, error]);
 
   const repeatingSlots = useMemo(() => availableSlots.filter((s) => s.repeatingLabel), [availableSlots]);
 
@@ -783,6 +783,7 @@ export default function AvailabilityCalendar() {
         </Link>
 
         <h1 className="text-3xl sm:text-4xl font-bold text-center mb-2">View Availability</h1>
+        {error && <p role="alert" className="mb-4 text-red-800">Calendar availability is temporarily unavailable. Please contact Ilana to confirm a time.</p>}
         <p className="text-center text-gray-500 text-sm sm:text-base mb-5">
           Browse open time slots and tap any block to book. All times are Jerusalem time (IST).
         </p>

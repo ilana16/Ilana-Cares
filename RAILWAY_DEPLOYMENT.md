@@ -66,7 +66,7 @@ OWNER_NAME=Ilana
 
 Email credentials are currently in the code (`server/email.ts`):
 - **Gmail:** ilana.cunningham16@gmail.com
-- **App Password:** zipe yywl pfwh acbw (remove spaces when using)
+- App Password: configure privately in the hosting dashboard; never store it in Git.
 
 These will work as-is. For better security in production:
 1. Add environment variables: `GMAIL_USER` and `GMAIL_APP_PASSWORD`

@@ -1,0 +1,34 @@
+import assert from 'node:assert/strict';
+const origin = process.env.TEST_ORIGIN || 'http://127.0.0.1:8788';
+assert.ok(['127.0.0.1','localhost'].includes(new URL(origin).hostname),'This test writes fixtures and must run locally.');
+const query = async (path, json) => {
+  const url = new URL(`/api/trpc/${path}`, origin);
+  if (json !== undefined) url.searchParams.set('input', JSON.stringify({json}));
+  const r = await fetch(url);
+  const text = await r.text();
+  return {r, body: r.headers.get('Content-Type')?.includes('application/json') ? JSON.parse(text) : text};
+};
+const mutation = async (path, json, extraHeaders={}) => {
+  const r = await fetch(`${origin}/api/trpc/${path}`, {method:'POST',headers:{'Content-Type':'application/json',...extraHeaders},body:JSON.stringify({json})});
+  const text = await r.text();
+  return {r, body: r.headers.get('Content-Type')?.includes('application/json') ? JSON.parse(text) : text};
+};
+const health = await query('system.health',{timestamp:0});
+assert.equal(health.r.status,200); assert.equal(health.body.result.data.json.storage,'cloudflare-d1');
+assert.equal(health.r.headers.get('X-Ilana-Storage'),'cloudflare-d1');
+const booking = await mutation('booking.submit',{date:'2030-01-06',startTime:'10:00',duration:2,fullName:'D1 local verification',email:'d1-test@example.com',phone:'0000000000',numChildren:1,additionalInfo:'Local fixture only'});
+assert.equal(booking.r.status,200); assert.equal(booking.body.result.data.json.success,true);
+const contact = await mutation('contact.submit',{name:'D1 local verification',email:'d1-test@example.com',phone:'0000000000',message:'Unicode and newline: שלום\nPreserve this.'});
+assert.equal(contact.r.status,200);
+const review = {publicName:'D1 local verification',email:'d1-test@example.com',rating:5,comment:'Pending review is private',consent:true};
+assert.equal((await mutation('reviews.submit',review)).r.status,200);
+assert.deepEqual((await query('reviews.list')).body.result.data.json,[]);
+assert.equal((await mutation('reviews.submit',{...review,website:'spam'})).r.status,400);
+assert.equal((await mutation('reviews.submit',{...review,rating:6})).r.status,400);
+assert.equal((await query('reviews.adminList',{token:'forged'})).r.status,403);
+assert.equal((await mutation('reviews.moderate',{token:'forged',id:1,status:'approved'})).r.status,403);
+assert.equal((await mutation('reviews.reply',{token:'forged',id:1,reply:'forged'})).r.status,403);
+assert.equal((await mutation('reviews.remove',{token:'forged',id:1})).r.status,403);
+assert.equal((await mutation('contact.submit',{name:'x',email:'invalid',phone:'0',message:'x'})).r.status,400);
+assert.equal((await mutation('contact.submit',{name:'x',email:'x@example.com',phone:'0',message:'x'},{Origin:'https://untrusted.example'})).r.status,403);
+console.log('PASS: D1 health, booking/contact/review writes, moderation privacy, input validation, admin authorization and cross-origin protection.');

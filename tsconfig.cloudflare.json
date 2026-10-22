@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["functions/**/*.ts", "cloudflare/**/*.ts", "worker-configuration.d.ts", "server/reviewAuth.ts", "shared/reviews.ts"],
+  "compilerOptions": { "incremental": false, "types": ["node", "vite/client", "@cloudflare/workers-types"] }
+}

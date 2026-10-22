@@ -1,0 +1,12 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "ilana-cares-staging",
+  "pages_build_output_dir": "./dist/public",
+  "compatibility_date": "2026-10-22",
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "ilana-cares-staging",
+    "database_id": "866021a6-e8ff-4c49-a18a-363a017f3f45"
+  }]
+}

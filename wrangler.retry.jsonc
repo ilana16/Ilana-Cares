@@ -1,0 +1,9 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "ilana-care-notification-retry",
+  "main": "cloudflare/notification-retry-worker.ts",
+  "compatibility_date": "2026-10-22",
+  "compatibility_flags": ["global_fetch_strictly_public"],
+  "triggers": { "crons": ["* * * * *"] },
+  "observability": { "enabled": true }
+}

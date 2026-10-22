@@ -35,7 +35,7 @@ export default function Booking() {
   const [submitted, setSubmitted] = useState(false);
 
   // Fetch busy times from calendar
-  const { data: busyTimes = [] } = trpc.booking.getBusyTimes.useQuery();
+  const { data: busyTimes = [], isLoading: calendarLoading, error: calendarError } = trpc.booking.getBusyTimes.useQuery();
 
   const submitBooking = trpc.booking.submit.useMutation({
     onSuccess: () => {
@@ -56,6 +56,7 @@ export default function Booking() {
 
   // Helper function to check if a date has any available slots
   const hasAvailableSlots = (dateString: string): boolean => {
+    if (calendarLoading || calendarError) return false;
     // Parse date in Jerusalem timezone
     const date = toZonedTime(new Date(dateString + 'T12:00:00'), JERUSALEM_TZ);
     const dayOfWeek = date.getDay();
@@ -116,7 +117,7 @@ export default function Booking() {
 
   // Generate available time slots
   const availableTimeSlots = useMemo(() => {
-    if (!selectedDate) return [];
+    if (!selectedDate || calendarLoading || calendarError) return [];
     
     // Parse date in Jerusalem timezone
     const date = toZonedTime(new Date(selectedDate + 'T12:00:00'), JERUSALEM_TZ);
@@ -174,7 +175,7 @@ export default function Booking() {
       
       return true;
     });
-  }, [selectedDate, duration, busyTimes]);
+  }, [selectedDate, duration, busyTimes, calendarLoading, calendarError]);
 
   const handleNext = () => {
     if (step === 1 && duration >= 2 && duration <= 10) {
@@ -282,6 +283,8 @@ export default function Booking() {
         </Card>
 
         {/* Booking Form */}
+        {calendarError && <p role="alert" className="mb-4 text-red-800">Calendar availability is temporarily unavailable. Please contact Ilana to confirm a time.</p>}
+        {calendarLoading && <p role="status" className="mb-4">Checking calendar availability…</p>}
         <Card className="p-8 gradient-blue">
           <div className="mb-6">
             <div className="flex justify-between items-center mb-2">
@@ -507,7 +510,7 @@ export default function Booking() {
             ) : (
               <Button
                 onClick={handleSubmit}
-                disabled={submitBooking.isPending}
+                disabled={submitBooking.isPending || calendarLoading || Boolean(calendarError)}
                 className="ml-auto min-h-[50px] gradient-pink text-primary-foreground"
               >
                 {submitBooking.isPending ? "Submitting..." : "Submit Booking Request"}

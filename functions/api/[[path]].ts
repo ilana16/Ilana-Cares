@@ -1,46 +1,29 @@
-/**
- * TEMPORARY migration-only Cloudflare Pages Function.
- * Same-origin API forwarding to the existing Railway service.
- * Allows Cloudflare preview of the React frontend without moving
- * the live MySQL database yet. Remove once the API is on Workers/D1.
- *
- * IMPORTANT: Do not delete/stop Railway while this file is in use.
- */
-interface Env {
-  // Override with a secret/plaintext Pages environment variable if needed.
-  RAILWAY_API_ORIGIN?: string;
-}
+import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
+import { d1Router, flushNotifications } from "../../cloudflare/api/router";
+import type { ApiEnv } from "../../cloudflare/api/types";
 
-export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
-  const source = env.RAILWAY_API_ORIGIN || "https://ilana-cares-production.up.railway.app";
-  const base = new URL(source);
-  if (base.protocol !== "https:" || base.hostname !== "ilana-cares-production.up.railway.app") {
-    return new Response("API upstream is not configured safely", { status: 500 });
+export const onRequest: PagesFunction<ApiEnv> = async context => {
+  const { request, env } = context;
+  const url = new URL(request.url);
+  if (!env.DB) return new Response("Database is not configured", { status: 503 });
+  if (request.method === "POST") {
+    const origin = request.headers.get("Origin");
+    if (origin && origin !== url.origin) return new Response("Forbidden", { status: 403 });
+    if (Number(request.headers.get("Content-Length") || 0) > 32768)
+      return new Response("Request too large", { status: 413 });
   }
-  const inbound = new URL(request.url);
-  if (!inbound.pathname.startsWith("/api/")) {
+  if (!url.pathname.startsWith("/api/trpc/"))
     return new Response("Not found", { status: 404 });
-  }
-  const target = new URL(inbound.pathname + inbound.search, base);
-  const headers = new Headers(request.headers);
-  headers.delete("host");
-  headers.delete("x-forwarded-host");
-  const upstream = new Request(target, {
-    method: request.method,
-    headers,
-    body: request.method === "GET" || request.method === "HEAD" ? undefined : request.body,
-    redirect: "manual",
+  const response = await fetchRequestHandler({
+    endpoint: "/api/trpc",
+    req: request,
+    router: d1Router,
+    createContext: () => ({ env, request }),
+    onError: ({ error }) => console.error("API error", { code: error.code }),
   });
-  try {
-    const response = await fetch(upstream);
-    const responseHeaders = new Headers(response.headers);
-    responseHeaders.set("Cache-Control", "private, no-store");
-    return new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers: responseHeaders,
-    });
-  } catch {
-    return new Response("Booking API temporarily unavailable", { status: 502 });
-  }
+  context.waitUntil(flushNotifications(env).catch(() => console.error("Notification delivery deferred")));
+  const result = new Response(response.body, response);
+  result.headers.set("Cache-Control", "private, no-store");
+  result.headers.set("X-Ilana-Storage", "cloudflare-d1");
+  return result;
 };

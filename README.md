@@ -95,7 +95,7 @@ The following values are hardcoded in the application and can be modified in the
 
 **Gmail Configuration** (`server/email.ts`):
 - Email: `ilana.cunningham16@gmail.com`
-- App Password: `zipe yywl pfwh acbw` (remove spaces when using)
+- App Password: configure privately in the hosting dashboard; never store it in Git.
 
 **Google Calendar** (`server/calendar.ts`):
 - Calendar URL: `https://calendar.google.com/calendar/ical/ilana.cunningham16%40gmail.com/private-61152a9b1ed98976ae5fe28815b6f4b6/basic.ics`
