@@ -1,4 +1,5 @@
 import type { ApiEnv } from "./types";
+import nodemailer from "nodemailer";
 
 export async function googleToken(env: ApiEnv): Promise<string | null> {
   if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET || !env.GOOGLE_REFRESH_TOKEN) return null;
@@ -40,13 +41,19 @@ export async function busyTimes(env: ApiEnv) {
 }
 
 export async function email(env: ApiEnv, id: string, subject: string, text: string) {
-  if (!env.RESEND_API_KEY) return false;
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST", headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json", "Idempotency-Key": id },
-    body: JSON.stringify({ from: env.EMAIL_FROM || "Ilana Care <onboarding@resend.dev>",
-      to: "Ilanadevorah25@gmail.com", subject, text }), signal: AbortSignal.timeout(10000),
+  if (!env.GMAIL_APP_PASSWORD) return false;
+  const address = "Ilanadevorah25@gmail.com";
+  const transport = nodemailer.createTransport({
+    host: "smtp.gmail.com", port: 465, secure: true,
+    auth: { user: address, pass: env.GMAIL_APP_PASSWORD.replace(/\s/g, "") },
+    connectionTimeout: 8000, greetingTimeout: 5000, socketTimeout: 10000,
+    disableFileAccess: true, disableUrlAccess: true,
   });
-  return response.ok;
+  try {
+    const result = await transport.sendMail({ from: { name: "Ilana Care", address }, to: address,
+      subject, text, messageId: `<${id}@ilana.care>` });
+    return result.accepted.some(recipient => String(recipient).toLowerCase() === address.toLowerCase());
+  } finally { transport.close(); }
 }
 
 export async function appendSheet(env: ApiEnv, data: Record<string, unknown>) {

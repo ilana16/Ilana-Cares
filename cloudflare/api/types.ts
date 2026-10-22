@@ -1,6 +1,5 @@
 export type ApiEnv = Cloudflare.Env & {
-  RESEND_API_KEY?: string;
-  EMAIL_FROM?: string;
+  GMAIL_APP_PASSWORD?: string;
   GOOGLE_API_KEY?: string;
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;

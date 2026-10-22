@@ -16,7 +16,7 @@ The `d1-cutover` branch replaces the temporary Railway API proxy with native Pag
 
 ## Before production cutover
 
-1. Transfer existing Railway integration settings into encrypted Cloudflare Pages production variables: `RESEND_API_KEY`, `EMAIL_FROM`, `GOOGLE_API_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`, and `GOOGLE_SPREADSHEET_ID`. Do not transfer MySQL credentials. Never commit secrets or customer exports.
+1. Transfer existing Railway integration settings into encrypted Cloudflare Pages production variables: `GOOGLE_API_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`, and `GOOGLE_SPREADSHEET_ID`. Set `GMAIL_APP_PASSWORD` as an encrypted Cloudflare Pages production secret using the new Gmail app password. The sender and recipient are `Ilanadevorah25@gmail.com`, using Gmail SMTP on port 465 with TLS. No Resend key is used by the D1 backend. Do not transfer MySQL credentials. Never commit secrets or customer exports.
 2. Apply `cloudflare/runtime.sql` to remote D1. It only adds internal queue/rate-limit tables.
 3. Recheck all source MySQL rows against D1 immediately before switching. Import any newly received records without overwriting conflicts.
 4. Set the Pages production branch to the tested `d1-cutover` commit and deploy. Git-triggered builds read the D1 binding from `wrangler.jsonc`.
@@ -29,7 +29,7 @@ Use the repository's pinned pnpm version (`10.4.1`).
 
 ```
 pnpm install --frozen-lockfile
-pnpm exec wrangler types
+pnpm exec wrangler types --include-runtime false
 pnpm exec tsc --noEmit
 pnpm exec tsc --noEmit -p tsconfig.cloudflare.json
 pnpm exec vitest run

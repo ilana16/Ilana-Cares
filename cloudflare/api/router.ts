@@ -49,7 +49,7 @@ type Job = { id: string; kind: string; recordId: number; payload: string; attemp
 export async function flushNotifications(env: ApiEnv) {
   // Bound work per request. Failed jobs remain durable and are retried on subsequent site/admin requests.
   const timestamp = Date.now();
-  const { results } = await env.DB.prepare("SELECT id,kind,recordId,payload,attempts FROM notification_outbox WHERE sentAt IS NULL AND nextAttemptAt<=? AND leaseUntil<? ORDER BY createdAt LIMIT 3")
+  const { results } = await env.DB.prepare("SELECT id,kind,recordId,payload,attempts FROM notification_outbox WHERE sentAt IS NULL AND nextAttemptAt<=? AND leaseUntil<? ORDER BY createdAt LIMIT 1")
     .bind(timestamp, timestamp).all<Job>();
   for (const job of results) {
     const claim = await env.DB.prepare("UPDATE notification_outbox SET leaseUntil=?,attempts=attempts+1 WHERE id=? AND sentAt IS NULL AND leaseUntil<?")
@@ -129,7 +129,7 @@ export const d1Router = t.router({
       }),
     adminList: admin.query(async ({ ctx }) => ({
       items: (await ctx.env.DB.prepare("SELECT * FROM reviews ORDER BY createdAt DESC,id DESC").all<ReviewRow>()).results.map(review),
-      emailConfigured: Boolean(ctx.env.RESEND_API_KEY),
+      emailConfigured: Boolean(ctx.env.GMAIL_APP_PASSWORD),
     })),
     moderate: admin.input(idInput.extend({ status: z.enum(["approved","rejected","pending"]) })).mutation(async ({ ctx, input }) => {
       await ctx.env.DB.prepare("UPDATE reviews SET status=? WHERE id=?").bind(input.status,input.id).run(); return { success: true };
