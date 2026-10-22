@@ -64,7 +64,7 @@ export default function Reviews() {
         <header className="text-center space-y-3">
           <h1 className="text-4xl md:text-5xl font-bold">Reviews</h1>
           <p className="text-lg text-muted-foreground">
-            Experiences shared by families who have used Ilana Cares.
+            Experiences shared by families who have used Ilana Care.
           </p>
         </header>
         <Card className="p-6 md:p-8 gradient-pink">
@@ -237,7 +237,7 @@ export default function Reviews() {
           {list.data?.length === 0 && (
             <Card className="p-6 gradient-blue">
               <p>
-                No reviews have been published yet. Have you used Ilana Cares?
+                No reviews have been published yet. Have you used Ilana Care?
                 Share your experience above.
               </p>
             </Card>
